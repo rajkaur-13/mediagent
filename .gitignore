@@ -1,0 +1,21 @@
+# Environment variables
+.env
+.env.local
+
+# Python
+__pycache__/
+*.pyc
+venv/
+venv311/
+*.pyc
+
+# Uploads
+uploads/
+chroma_db/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
