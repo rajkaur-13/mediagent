@@ -82,7 +82,7 @@ JWT_SECRET_KEY=your_secret_key
 
 ## Author
 
-Raj Kaur
+Rajinder Kaur
 
 ## License
 
