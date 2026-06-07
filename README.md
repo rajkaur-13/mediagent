@@ -4,13 +4,13 @@ An intelligent medical assistant that helps doctors find patients, schedule appo
 
 ## Features
 
-- Natural Language Understanding - Doctors can type naturally, AI understands intent
-- Vector Search - Handles typos and semantic patient search using ChromaDB
-- Multi-Agent AI - LangGraph with Planner, Executor, and Reflector agents
-- SOAP Notes - Structured JSONB storage for clinical documentation
-- Image Storage - Upload and manage medical images
-- Caching - Redis for faster repeated searches
-- Authentication - JWT-based secure access
+- Natural Language Understanding
+- Vector Search - Handles typos using ChromaDB
+- Multi-Agent AI - LangGraph with Planner, Executor, and Reflector
+- SOAP Notes - Structured JSONB storage
+- Image Storage - Upload medical images
+- Redis Caching - Faster repeated searches
+- JWT Authentication - Secure access
 
 ## Tech Stack
 
@@ -28,53 +28,40 @@ An intelligent medical assistant that helps doctors find patients, schedule appo
 
 ### Backend Setup
 
+```bash
 cd backend
 python -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
 cp .env.example .env
 uvicorn app.main:app --reload
+```
 
 ### Frontend Setup
 
+```bash
 cd frontend
 npm install
 npm start
+```
 
 ### Login Credentials
 
-Email: doctor@mediagent.com
-Password: password123
-
-Open http://localhost:3000 to use the application.
+- Email: doctor@mediagent.com
+- Password: password123
 
 ## Architecture
 
-User Message -> Planner Agent -> Executor Agent -> Reflector Agent -> Response
-
-Planner decides what to do
-Executor runs tools in parallel
-Reflector checks success
-Response formats answer
-
-## Database Schema
-
-- users - Doctor accounts and authentication
-- patients - Patient demographics and medical history
-- appointments - Scheduled appointments
-- soap_notes - Clinical documentation with JSONB storage
+User Message -> Planner -> Executor -> Reflector -> Response
 
 ## Environment Variables
 
 Create a .env file with:
 
-
-## Future Enhancements
-
-- RAG pipeline for medical research papers
-- X-ray and MRI analysis with vision models
-- Prescription generator with drug interaction checker
-- Voice input support
+- DATABASE_URL
+- GROQ_API_KEY
+- REDIS_URL
+- JWT_SECRET_KEY
 
 ## Author
 
@@ -83,14 +70,3 @@ Rajinder Kaur
 ## License
 
 MIT
-
-## Environment Variables
-
-Create a .env file with your API keys:
-
-- DATABASE_URL=your_postgresql_url
-- GROQ_API_KEY=your_groq_api_key
-- REDIS_URL=your_redis_url
-- JWT_SECRET_KEY=your_secret_key
-
-Contact author for access or use your own keys.
