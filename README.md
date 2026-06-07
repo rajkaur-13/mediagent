@@ -68,10 +68,6 @@ Response formats answer
 
 Create a .env file with:
 
-DATABASE_URL=postgresql://...
-GROQ_API_KEY=gsk_...
-REDIS_URL=rediss://...
-JWT_SECRET_KEY=your_secret_key
 
 ## Future Enhancements
 
@@ -87,3 +83,14 @@ Rajinder Kaur
 ## License
 
 MIT
+
+## Environment Variables
+
+Create a .env file with your API keys:
+
+- DATABASE_URL=your_postgresql_url
+- GROQ_API_KEY=your_groq_api_key
+- REDIS_URL=your_redis_url
+- JWT_SECRET_KEY=your_secret_key
+
+Contact author for access or use your own keys.
