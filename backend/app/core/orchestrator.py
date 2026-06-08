@@ -7,6 +7,7 @@ from ..services.redis_service import redis_service
 from ..tools.patient_tools import search_patient, get_all_patients
 from ..tools.appointment_tools import schedule_appointment, get_appointments
 from ..tools.soap_tools import generate_soap_note
+from ..tools.prescription_tools import generate_prescription, get_prescriptions
 from ..tools.xray_tools import analyze_xray
 
 class AgentOrchestrator:
@@ -30,16 +31,13 @@ class AgentOrchestrator:
         if intent["action"] == "search_patient":
             name = intent.get("patient_name", "")
             
-            # Check cache first
             cached_result = redis_service.get_patient_search(name)
             if cached_result:
                 print(f"⚡ Cache hit for: {name}")
                 result = cached_result
             else:
-                # First try exact search
                 result = search_patient(name, self.db)
                 
-                # If no exact match, try vector search
                 if not result.get("found"):
                     print(f"🔍 No exact match for '{name}', trying vector search...")
                     vector_results = chroma_service.search_patients(name, top_k=5)
@@ -60,7 +58,6 @@ class AgentOrchestrator:
                     else:
                         response_text = f"❌ No patient found matching '{name}'. Please check the spelling."
                 
-                # Cache the result
                 if result.get("found"):
                     redis_service.set_patient_search(name, result)
             
@@ -97,7 +94,6 @@ class AgentOrchestrator:
                     self.db,
                     self.doctor_id
                 )
-                # Clear cache when appointment is scheduled (patient data changed)
                 redis_service.clear_patient_cache(patient_name)
                 response_text = result.get("message", "Appointment scheduled" if result.get("success") else "Failed to schedule")
                 
@@ -111,7 +107,6 @@ class AgentOrchestrator:
                 
         elif intent["action"] == "generate_soap_note":
             if self.current_patient_id:
-                # Check cache for SOAP notes
                 cached_soap = redis_service.get_soap_notes(self.current_patient_id)
                 if cached_soap:
                     print(f"⚡ Cache hit for SOAP notes of {self.current_patient_name}")
@@ -134,6 +129,63 @@ class AgentOrchestrator:
                     response_text = "Failed to generate SOAP note"
             else:
                 response_text = "❌ Please select a patient first. Type: 'Show me patient [name]'"
+        
+        elif intent["action"] == "generate_prescription":
+            if self.current_patient_id:
+                result = generate_prescription(
+                    patient_id=self.current_patient_id,
+                    doctor_id=self.doctor_id,
+                    medication=intent.get("medication", "Unknown"),
+                    dosage=intent.get("dosage", "500mg"),
+                    frequency=intent.get("frequency", "Once daily"),
+                    duration=intent.get("duration", "7 days"),
+                    instructions=intent.get("instructions", "Take as directed"),
+                    db=self.db
+                )
+                if result.get("success"):
+                    rx = result["prescription"]
+                    response_text = f"💊 Prescription generated for {rx['patient_name']}:\n\n**Medication:** {rx['medication']}\n**Dosage:** {rx['dosage']}\n**Frequency:** {rx['frequency']}\n**Duration:** {rx['duration']}\n**Instructions:** {rx['instructions']}"
+                else:
+                    response_text = "Failed to generate prescription"
+            else:
+                response_text = "❌ Please select a patient first. Type: 'Show me patient [name]'"
+        
+        elif intent["action"] == "get_prescriptions":
+            patient_name = intent.get("patient_name")
+            target_patient_id = self.current_patient_id
+            
+            if patient_name:
+                result = search_patient(patient_name, self.db)
+                if result.get("found"):
+                    target_patient_id = result["patient"]["id"]
+                    target_patient_name = result["patient"]["name"]
+                else:
+                    response_text = f"❌ Patient '{patient_name}' not found"
+                    return {
+                        "reply": response_text,
+                        "patient": None,
+                        "tool_calls": ["get_prescriptions"],
+                        "session_id": None
+                    }
+            elif not target_patient_id:
+                response_text = "❌ Please select a patient first. Type: 'Show me patient [name]' or 'Show me prescriptions for [name]'"
+                return {
+                    "reply": response_text,
+                    "patient": None,
+                    "tool_calls": ["get_prescriptions"],
+                    "session_id": None
+                }
+            
+            result = get_prescriptions(target_patient_id, self.db)
+            if result.get("prescriptions") and len(result["prescriptions"]) > 0:
+                rx_list = []
+                for rx in result["prescriptions"]:
+                    content = rx["content"]
+                    rx_list.append(f"• **{content['medication']['name']}** - {content['medication']['dosage']} - {content['medication']['frequency']} - Prescribed: {rx['prescribed_date'][:10]}")
+                
+                response_text = f"💊 Prescriptions for {self.current_patient_name if not patient_name else patient_name}:\n\n" + "\n".join(rx_list)
+            else:
+                response_text = f"No prescriptions found for {self.current_patient_name if not patient_name else patient_name}"
                 
         else:
             response_text = get_llm_response(user_message, self.conversation_history)
@@ -149,6 +201,42 @@ class AgentOrchestrator:
     
     def _detect_intent(self, message: str) -> Dict[str, Any]:
         message_lower = message.lower().strip()
+        
+        # Check for prescriptions
+        if "prescription" in message_lower or "rx" in message_lower:
+            if "show" in message_lower or "view" in message_lower or "get" in message_lower:
+                # Extract patient name
+                name_match = re.search(r'(?:for|of)\s+([A-Za-z]+(?:\s+[A-Za-z]+)?)', message_lower)
+                if name_match:
+                    return {"action": "get_prescriptions", "patient_name": name_match.group(1).title()}
+                return {"action": "get_prescriptions"}
+            elif "write" in message_lower or "generate" in message_lower or "create" in message_lower:
+                # Extract prescription details
+                med_match = re.search(r'(?:prescribe|write|give)\s+(\w+(?:\s+\w+)?)', message_lower)
+                medication = med_match.group(1).title() if med_match else "Unknown"
+                
+                dosage_match = re.search(r'(\d+(?:\.\d+)?\s*(?:mg|mcg|g|ml))', message_lower)
+                dosage = dosage_match.group(1) if dosage_match else "500mg"
+                
+                frequency = "Once daily"
+                if "twice" in message_lower:
+                    frequency = "Twice daily"
+                elif "three times" in message_lower:
+                    frequency = "Three times daily"
+                
+                duration = "7 days"
+                days_match = re.search(r'for\s+(\d+)\s+days', message_lower)
+                if days_match:
+                    duration = f"{days_match.group(1)} days"
+                
+                return {
+                    "action": "generate_prescription",
+                    "medication": medication,
+                    "dosage": dosage,
+                    "frequency": frequency,
+                    "duration": duration,
+                    "instructions": f"Take {dosage} {frequency} for {duration}"
+                }
         
         if "soap" in message_lower or "generate note" in message_lower:
             return {"action": "generate_soap_note"}
