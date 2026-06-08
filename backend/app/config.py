@@ -9,11 +9,6 @@ class Settings(BaseSettings):
     # Redis
     REDIS_URL: str = ""
     
-    # Pinecone (Optional)
-    PINECONE_API_KEY: str = "placeholder"
-    PINECONE_ENVIRONMENT: str = "us-east4-gcp"
-    PINECONE_INDEX: str = "mediagent"
-    
     # Groq
     GROQ_API_KEY: str
     
@@ -30,20 +25,19 @@ class Settings(BaseSettings):
     DEBUG: bool = False
     CORS_ORIGINS: str = "http://localhost:3000,http://localhost:5173"
     
-    # R2 Storage
-    R2_ACCESS_KEY_ID: str = ""
-    R2_SECRET_ACCESS_KEY: str = ""
-    R2_ENDPOINT_URL: str = ""
-    R2_BUCKET_NAME: str = "mediagent-images"
-    R2_PUBLIC_URL: str = ""
+    # Backblaze B2
+    B2_ACCESS_KEY_ID: str = ""
+    B2_SECRET_ACCESS_KEY: str = ""
+    B2_ENDPOINT_URL: str = ""
+    B2_BUCKET_NAME: str = "mediagent-images"
     
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"
+        extra = "ignore"  # This allows extra fields in .env
     
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        # Parse CORS_ORIGINS if it's a string
         if isinstance(self.CORS_ORIGINS, str):
             try:
                 self.CORS_ORIGINS = json.loads(self.CORS_ORIGINS)
