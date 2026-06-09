@@ -446,3 +446,131 @@ body {
 .cancel-btn:hover {
   background: #dc2626;
 }
+
+.xray-analyzer {
+  padding: 16px;
+}
+
+.image-type-selector {
+  margin-bottom: 16px;
+}
+
+.image-type-selector label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.image-type-selector select {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  background: white;
+}
+
+.analyze-btn {
+  width: 100%;
+  padding: 12px;
+  background: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  margin-top: 16px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.analyze-btn:hover {
+  background: #2563eb;
+}
+
+.analysis-result {
+  margin-top: 16px;
+  padding: 12px;
+  background: #f0fdf4;
+  border-radius: 8px;
+  border-left: 4px solid #22c55e;
+}
+
+.analysis-result h4 {
+  margin-bottom: 8px;
+  color: #166534;
+}
+
+.finding {
+  font-size: 14px;
+  margin-bottom: 8px;
+  line-height: 1.4;
+}
+
+.confidence {
+  font-size: 12px;
+  color: #4b5563;
+  margin-bottom: 8px;
+}
+
+.recommendation {
+  font-size: 13px;
+  font-weight: 500;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid #bbf7d0;
+}
+
+.followup-warning {
+  margin-top: 8px;
+  padding: 6px;
+  background: #fef3c7;
+  color: #92400e;
+  border-radius: 4px;
+  font-size: 12px;
+  text-align: center;
+}
+
+.appointment-item {
+  padding: 10px;
+  margin-bottom: 8px;
+  background: #f8fafc;
+  border-radius: 8px;
+  border-left: 3px solid #3b82f6;
+}
+
+.appointment-patient {
+  font-weight: 600;
+  font-size: 13px;
+  color: #1e293b;
+}
+
+.appointment-date {
+  font-size: 11px;
+  color: #10b981;
+  font-weight: 500;
+  margin-top: 4px;
+}
+
+.appointment-time {
+  font-size: 11px;
+  color: #6b7280;
+  margin-top: 2px;
+}
+
+.appointment-reason {
+  font-size: 11px;
+  color: #6b7280;
+  margin-top: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.no-appointments {
+  padding: 12px;
+  text-align: center;
+  color: #94a3b8;
+  font-size: 12px;
+}
+
+.vitals-card {
+  margin-top: 8px;
+}

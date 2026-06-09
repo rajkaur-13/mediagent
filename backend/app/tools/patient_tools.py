@@ -3,7 +3,7 @@ from ..models.patient import Patient
 from ..models.user import User
 
 def search_patient(name: str, db: Session, doctor_id: str = None) -> dict:
-    """Search for a patient by name (case-insensitive partial match)"""
+    """Search for a patient by name"""
     patients = db.query(Patient).filter(
         Patient.name.ilike(f"%{name}%")
     ).all()
@@ -11,8 +11,24 @@ def search_patient(name: str, db: Session, doctor_id: str = None) -> dict:
     if not patients:
         return {"found": False, "message": f"No patient found with name '{name}'"}
     
-    # Return the first match
     patient = patients[0]
+    
+    # Build analysis summary from saved history
+    analysis_summary = ""
+    if patient.analysis_history and len(patient.analysis_history) > 0:
+        analysis_summary = "\n\n📊 **Image Analysis History:**"
+        for a in patient.analysis_history[-3:]:  # Show last 3
+            img_type = a.get('image_type', 'Image').replace('_', ' ').title()
+            findings = a.get('findings', 'No findings')[:100]
+            confidence = a.get('confidence', 0)
+            if confidence:
+                analysis_summary += f"\n• {img_type}: {findings} (Confidence: {confidence*100:.0f}%)"
+            else:
+                analysis_summary += f"\n• {img_type}: {findings}"
+        
+        if len(patient.analysis_history) > 3:
+            analysis_summary += f"\n\n📸 Total {len(patient.analysis_history)} images analyzed."
+    
     return {
         "found": True,
         "patient": {
@@ -24,12 +40,13 @@ def search_patient(name: str, db: Session, doctor_id: str = None) -> dict:
             "phone": patient.phone,
             "allergies": patient.allergies or [],
             "conditions": patient.conditions or [],
-            "medications": patient.medications or []
+            "medications": patient.medications or [],
+            "analysis_history": patient.analysis_history or [],
+            "analysis_summary": analysis_summary
         }
     }
 
 def get_all_patients(db: Session, limit: int = 20) -> dict:
-    """Get all patients with pagination"""
     patients = db.query(Patient).limit(limit).all()
     
     return {
@@ -45,11 +62,23 @@ def get_all_patients(db: Session, limit: int = 20) -> dict:
     }
 
 def get_patient_by_id(patient_id: str, db: Session) -> dict:
-    """Get patient by UUID"""
-    patient = db.query(Patient).filter(Patient.id == patient_id).first()
+    from uuid import UUID
+    patient = db.query(Patient).filter(Patient.id == UUID(patient_id)).first()
     
     if not patient:
         return {"found": False, "message": "Patient not found"}
+    
+    analysis_summary = ""
+    if patient.analysis_history and len(patient.analysis_history) > 0:
+        analysis_summary = "\n\n📊 **Image Analysis History:**"
+        for a in patient.analysis_history[-3:]:
+            img_type = a.get('image_type', 'Image').replace('_', ' ').title()
+            findings = a.get('findings', 'No findings')[:100]
+            confidence = a.get('confidence', 0)
+            if confidence:
+                analysis_summary += f"\n• {img_type}: {findings} (Confidence: {confidence*100:.0f}%)"
+            else:
+                analysis_summary += f"\n• {img_type}: {findings}"
     
     return {
         "found": True,
@@ -63,6 +92,8 @@ def get_patient_by_id(patient_id: str, db: Session) -> dict:
             "email": patient.email,
             "allergies": patient.allergies or [],
             "conditions": patient.conditions or [],
-            "medications": patient.medications or []
+            "medications": patient.medications or [],
+            "analysis_history": patient.analysis_history or [],
+            "analysis_summary": analysis_summary
         }
     }

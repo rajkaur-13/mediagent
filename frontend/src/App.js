@@ -1,9 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
+import XRayAnalyzer from './components/XRayAnalyzer';
 import './App.css';
 
 function App() {
   const [messages, setMessages] = useState([
-    { id: '1', text: "Hello! I'm MediAgent, your AI medical assistant. How can I help you today?", isUser: false, timestamp: new Date() }
+    { id: '1', text: "🏥 **Welcome to MediAgent!**\n\nI'm your AI medical assistant.\n\n🔹 **To work with a patient:** Search for them above using name or MRN\n🔹 **To ask a medical question:** Just type your question\n\nSelected patient will appear here, and all tools will become available.\n\nHow can I help you today?", isUser: false, timestamp: new Date() }
   ]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -11,6 +12,7 @@ function App() {
   const [soapNote, setSoapNote] = useState({ subjective: '', objective: '', assessment: '', plan: '' });
   const [activeTab, setActiveTab] = useState('soap');
   const [showAddPatient, setShowAddPatient] = useState(false);
+  const [recentAppointments, setRecentAppointments] = useState([]);
   const [prescription, setPrescription] = useState({
     medication: '',
     dosage: '',
@@ -30,6 +32,8 @@ function App() {
   const [token, setToken] = useState(null);
   const messagesEndRef = useRef(null);
 
+  const hasPatientSelected = currentPatient !== null;
+
   useEffect(() => {
     const login = async () => {
       try {
@@ -41,12 +45,45 @@ function App() {
         const data = await response.json();
         setToken(data.token);
         console.log('✅ Auto-login successful!');
+        fetchAppointments(data.token);
       } catch (error) {
         console.error('Login failed:', error);
       }
     };
     login();
   }, []);
+
+  const fetchAppointments = async (authToken) => {
+    try {
+      const response = await fetch('http://localhost:8000/api/appointments/', {
+        headers: { 'Authorization': `Bearer ${authToken}` }
+      });
+      const data = await response.json();
+      if (response.ok) {
+        setRecentAppointments(data.appointments || []);
+      }
+    } catch (error) {
+      console.error('Failed to fetch appointments:', error);
+    }
+  };
+
+  const getRelativeDate = (dateStr) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const appointmentDate = new Date(dateStr);
+    appointmentDate.setHours(0, 0, 0, 0);
+    
+    const diffTime = appointmentDate - today;
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays === 0) return 'Today';
+    if (diffDays === 1) return 'Tomorrow';
+    if (diffDays === -1) return 'Yesterday';
+    if (diffDays > 0 && diffDays <= 7) return `In ${diffDays} days`;
+    if (diffDays > 7) return `In ${Math.floor(diffDays / 7)} weeks`;
+    if (diffDays < 0 && diffDays >= -7) return `${Math.abs(diffDays)} days ago`;
+    return dateStr;
+  };
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -77,6 +114,10 @@ function App() {
       }
       
       setMessages(prev => [...prev, { id: (Date.now()+1).toString(), text: data.reply, isUser: false, timestamp: new Date() }]);
+      
+      if (input.toLowerCase().includes('schedule') || input.toLowerCase().includes('appointment')) {
+        fetchAppointments(token);
+      }
     } catch (error) {
       setMessages(prev => [...prev, { id: (Date.now()+1).toString(), text: 'Error: ' + error.message, isUser: false, timestamp: new Date() }]);
     }
@@ -123,7 +164,7 @@ function App() {
 
   const handleGeneratePrescription = async () => {
     if (!currentPatient) {
-      alert('Please select a patient first');
+      alert('❌ Please select a patient first');
       return;
     }
 
@@ -147,7 +188,6 @@ function App() {
       });
       
       if (response.ok) {
-        const data = await response.json();
         alert(`✅ Prescription generated for ${currentPatient.name}!`);
         setPrescription({ medication: '', dosage: '', frequency: 'Once daily', duration: '7 days', instructions: '' });
         setInput(`Show me prescriptions for ${currentPatient.name}`);
@@ -160,15 +200,42 @@ function App() {
     }
   };
 
+  const handleSaveSoapNote = () => {
+    if (!currentPatient) {
+      alert('❌ Please select a patient first');
+      return;
+    }
+    alert(`✅ SOAP note saved for ${currentPatient.name}!`);
+  };
+
   const quickAction = (action) => {
+    if (!currentPatient && action !== 'schedule') {
+      alert('❌ Please select a patient first');
+      return;
+    }
+    
     const actionMap = {
       'schedule': 'Schedule appointment for ' + (currentPatient?.name || 'patient'),
-      'soap': 'Generate SOAP note',
-      'xray': 'Upload X-ray for analysis',
-      'rx': 'Write prescription for ' + (currentPatient?.name || 'patient')
+      'soap': `Generate SOAP note for ${currentPatient?.name}`,
+      'xray': `Upload X-ray for ${currentPatient?.name}`,
+      'rx': `Write prescription for ${currentPatient?.name}`
     };
     setInput(actionMap[action]);
     setTimeout(() => sendMessage(), 100);
+  };
+
+  // Get upcoming appointments (next 7 days)
+  const upcomingAppointments = recentAppointments
+    .filter(apt => new Date(apt.date) >= new Date())
+    .sort((a, b) => new Date(a.date) - new Date(b.date))
+    .slice(0, 5);
+
+  // Tab labels with patient name when selected
+  const getTabLabel = (base, icon) => {
+    if (hasPatientSelected) {
+      return `${icon} ${base} for ${currentPatient.name.split(' ')[0]}`;
+    }
+    return `${icon} ${base}`;
   };
 
   return (
@@ -190,13 +257,14 @@ function App() {
       </header>
 
       <div className="main-container">
+        {/* Left Panel - Patient Context */}
         <div className="panel panel-patient">
           <div className="panel-header">📋 Patient Context</div>
           
           <div className="search-box">
             <input 
               type="text" 
-              placeholder="🔍 Search patient..." 
+              placeholder="🔍 Search patient by name or MRN..." 
               onKeyPress={(e) => {
                 if (e.key === 'Enter') setInput(`Show me ${e.target.value}`);
               }} 
@@ -228,7 +296,7 @@ function App() {
           )}
 
           <div className="patient-card">
-            <h4>{currentPatient ? 'Current Patient' : 'No Patient Selected'}</h4>
+            <h4>{currentPatient ? '✅ Current Patient' : '⚠️ No Patient Selected'}</h4>
             {currentPatient ? (
               <>
                 <div className="patient-name">{currentPatient.name}</div>
@@ -241,19 +309,32 @@ function App() {
                 <div className="patient-detail">📞 Phone: {currentPatient.phone || 'N/A'}</div>
               </>
             ) : (
-              <div className="no-patient">🔍 Search or add a patient</div>
+              <div className="no-patient">
+                <span>🔒</span>
+                <p>Select a patient to enable tools</p>
+                <small>Search above by name or MRN</small>
+              </div>
             )}
           </div>
 
           <div className="vitals-card">
-            <h4>📊 Vital Signs</h4>
-            <div className="vital-row"><span>❤️ BP:</span><span>120/80 mmHg</span></div>
-            <div className="vital-row"><span>💓 HR:</span><span>72 bpm</span></div>
-            <div className="vital-row"><span>🌡️ Temp:</span><span>98.6 °F</span></div>
-            <div className="vital-row"><span>🫁 SpO2:</span><span>98%</span></div>
+            <h4>📅 Upcoming Appointments</h4>
+            {upcomingAppointments.length > 0 ? (
+              upcomingAppointments.map((apt, idx) => (
+                <div key={idx} className="appointment-item">
+                  <div className="appointment-patient">{apt.patient_name}</div>
+                  <div className="appointment-date">{getRelativeDate(apt.date)}</div>
+                  <div className="appointment-time">{apt.time}</div>
+                  <div className="appointment-reason">{apt.reason?.substring(0, 30)}</div>
+                </div>
+              ))
+            ) : (
+              <div className="no-appointments">No upcoming appointments</div>
+            )}
           </div>
         </div>
 
+        {/* Middle Panel - Chat */}
         <div className="panel panel-chat">
           <div className="panel-header">💬 Conversation</div>
           <div className="chat-messages">
@@ -286,84 +367,124 @@ function App() {
           </div>
         </div>
 
+        {/* Right Panel - Tools */}
         <div className="panel panel-tools">
           <div className="panel-tabs">
-            <button className={`tab ${activeTab === 'soap' ? 'active' : ''}`} onClick={() => setActiveTab('soap')}>📝 SOAP</button>
-            <button className={`tab ${activeTab === 'rx' ? 'active' : ''}`} onClick={() => setActiveTab('rx')}>💊 Rx</button>
-            <button className={`tab ${activeTab === 'xray' ? 'active' : ''}`} onClick={() => setActiveTab('xray')}>🩻 X-Ray</button>
+            <button 
+              className={`tab ${activeTab === 'soap' ? 'active' : ''} ${!hasPatientSelected ? 'disabled' : ''}`}
+              onClick={() => hasPatientSelected && setActiveTab('soap')}
+              title={!hasPatientSelected ? "Select a patient first to use SOAP notes" : ""}
+            >
+              {getTabLabel('SOAP', '📝')}
+            </button>
+            <button 
+              className={`tab ${activeTab === 'rx' ? 'active' : ''} ${!hasPatientSelected ? 'disabled' : ''}`}
+              onClick={() => hasPatientSelected && setActiveTab('rx')}
+              title={!hasPatientSelected ? "Select a patient first to use prescriptions" : ""}
+            >
+              {getTabLabel('Rx', '💊')}
+            </button>
+            <button 
+              className={`tab ${activeTab === 'xray' ? 'active' : ''} ${!hasPatientSelected ? 'disabled' : ''}`}
+              onClick={() => hasPatientSelected && setActiveTab('xray')}
+              title={!hasPatientSelected ? "Select a patient first to upload images" : ""}
+            >
+              {getTabLabel('Imaging', '🩻')}
+            </button>
           </div>
 
           {activeTab === 'soap' && (
             <div className="soap-editor">
-              <div className="soap-field">
-                <label>📋 Subjective</label>
-                <textarea placeholder="Patient's symptoms, history..." value={soapNote.subjective} onChange={(e) => setSoapNote({...soapNote, subjective: e.target.value})} rows="2" />
-              </div>
-              <div className="soap-field">
-                <label>🔬 Objective</label>
-                <textarea placeholder="Exam findings, vitals..." value={soapNote.objective} onChange={(e) => setSoapNote({...soapNote, objective: e.target.value})} rows="2" />
-              </div>
-              <div className="soap-field">
-                <label>🧠 Assessment</label>
-                <textarea placeholder="Diagnosis, differential..." value={soapNote.assessment} onChange={(e) => setSoapNote({...soapNote, assessment: e.target.value})} rows="2" />
-              </div>
-              <div className="soap-field">
-                <label>📋 Plan</label>
-                <textarea placeholder="Treatment, follow-up..." value={soapNote.plan} onChange={(e) => setSoapNote({...soapNote, plan: e.target.value})} rows="2" />
-              </div>
-              <button className="save-btn" onClick={() => alert('SOAP note saved!')}>💾 Save SOAP Note</button>
+              {!hasPatientSelected ? (
+                <div className="disabled-overlay">
+                  <span>🔒</span>
+                  <p>Select a patient first to create SOAP notes</p>
+                </div>
+              ) : (
+                <>
+                  <div className="soap-field">
+                    <label>📋 Subjective</label>
+                    <textarea placeholder="Patient's symptoms, history..." value={soapNote.subjective} onChange={(e) => setSoapNote({...soapNote, subjective: e.target.value})} rows="2" />
+                  </div>
+                  <div className="soap-field">
+                    <label>🔬 Objective</label>
+                    <textarea placeholder="Exam findings, vitals..." value={soapNote.objective} onChange={(e) => setSoapNote({...soapNote, objective: e.target.value})} rows="2" />
+                  </div>
+                  <div className="soap-field">
+                    <label>🧠 Assessment</label>
+                    <textarea placeholder="Diagnosis, differential..." value={soapNote.assessment} onChange={(e) => setSoapNote({...soapNote, assessment: e.target.value})} rows="2" />
+                  </div>
+                  <div className="soap-field">
+                    <label>📋 Plan</label>
+                    <textarea placeholder="Treatment, follow-up..." value={soapNote.plan} onChange={(e) => setSoapNote({...soapNote, plan: e.target.value})} rows="2" />
+                  </div>
+                  <button className="save-btn" onClick={handleSaveSoapNote}>💾 Save SOAP Note for {currentPatient?.name?.split(' ')[0]}</button>
+                </>
+              )}
             </div>
           )}
 
           {activeTab === 'rx' && (
             <div className="soap-editor">
-              <h4>💊 Prescription Generator</h4>
-              <div className="soap-field">
-                <label>💊 Medication Name</label>
-                <input type="text" placeholder="e.g., Amoxicillin, Metformin" value={prescription.medication} onChange={(e) => setPrescription({...prescription, medication: e.target.value})} />
-              </div>
-              <div className="soap-field">
-                <label>📏 Dosage</label>
-                <input type="text" placeholder="e.g., 500mg, 10mg" value={prescription.dosage} onChange={(e) => setPrescription({...prescription, dosage: e.target.value})} />
-              </div>
-              <div className="soap-field">
-                <label>⏰ Frequency</label>
-                <select value={prescription.frequency} onChange={(e) => setPrescription({...prescription, frequency: e.target.value})}>
-                  <option>Once daily</option>
-                  <option>Twice daily</option>
-                  <option>Three times daily</option>
-                  <option>Every 4 hours</option>
-                  <option>Every 6 hours</option>
-                  <option>As needed</option>
-                </select>
-              </div>
-              <div className="soap-field">
-                <label>📅 Duration</label>
-                <input type="text" placeholder="e.g., 7 days, 30 days" value={prescription.duration} onChange={(e) => setPrescription({...prescription, duration: e.target.value})} />
-              </div>
-              <div className="soap-field">
-                <label>📝 Special Instructions</label>
-                <textarea placeholder="e.g., Take with food, Avoid alcohol" value={prescription.instructions} onChange={(e) => setPrescription({...prescription, instructions: e.target.value})} rows="2" />
-              </div>
-              <button className="save-btn" onClick={handleGeneratePrescription}>💊 Generate Prescription</button>
+              {!hasPatientSelected ? (
+                <div className="disabled-overlay">
+                  <span>🔒</span>
+                  <p>Select a patient first to generate prescriptions</p>
+                </div>
+              ) : (
+                <>
+                  <h4>💊 Prescription for {currentPatient?.name}</h4>
+                  <div className="soap-field">
+                    <label>💊 Medication Name</label>
+                    <input type="text" placeholder="e.g., Amoxicillin, Metformin" value={prescription.medication} onChange={(e) => setPrescription({...prescription, medication: e.target.value})} />
+                  </div>
+                  <div className="soap-field">
+                    <label>📏 Dosage</label>
+                    <input type="text" placeholder="e.g., 500mg, 10mg" value={prescription.dosage} onChange={(e) => setPrescription({...prescription, dosage: e.target.value})} />
+                  </div>
+                  <div className="soap-field">
+                    <label>⏰ Frequency</label>
+                    <select value={prescription.frequency} onChange={(e) => setPrescription({...prescription, frequency: e.target.value})}>
+                      <option>Once daily</option>
+                      <option>Twice daily</option>
+                      <option>Three times daily</option>
+                      <option>Every 4 hours</option>
+                      <option>Every 6 hours</option>
+                      <option>As needed</option>
+                    </select>
+                  </div>
+                  <div className="soap-field">
+                    <label>📅 Duration</label>
+                    <input type="text" placeholder="e.g., 7 days, 30 days" value={prescription.duration} onChange={(e) => setPrescription({...prescription, duration: e.target.value})} />
+                  </div>
+                  <div className="soap-field">
+                    <label>📝 Special Instructions</label>
+                    <textarea placeholder="e.g., Take with food, Avoid alcohol" value={prescription.instructions} onChange={(e) => setPrescription({...prescription, instructions: e.target.value})} rows="2" />
+                  </div>
+                  <button className="save-btn" onClick={handleGeneratePrescription}>💊 Generate Prescription for {currentPatient?.name?.split(' ')[0]}</button>
+                </>
+              )}
             </div>
           )}
 
           {activeTab === 'xray' && (
             <div className="xray-tab">
-              <div className="upload-area">
-                <span>🩻</span>
-                <p>Upload Chest X-Ray</p>
-                <small>Coming soon!</small>
-              </div>
+              {!hasPatientSelected ? (
+                <div className="disabled-overlay">
+                  <span>🔒</span>
+                  <p>Select a patient first to upload and analyze images</p>
+                </div>
+              ) : (
+                token && <XRayAnalyzer patientId={currentPatient?.id} token={token} />
+              )}
             </div>
           )}
 
           <div className="quick-actions">
             <button className="quick-btn" onClick={() => quickAction('schedule')}>📅 Schedule</button>
-            <button className="quick-btn" onClick={() => quickAction('soap')}>📝 SOAP Note</button>
-            <button className="quick-btn" onClick={() => quickAction('rx')}>💊 Prescription</button>
-            <button className="quick-btn" onClick={() => quickAction('xray')}>🩻 X-Ray</button>
+            <button className="quick-btn" onClick={() => quickAction('soap')} disabled={!hasPatientSelected} title={!hasPatientSelected ? "Select patient first" : ""}>📝 SOAP Note</button>
+            <button className="quick-btn" onClick={() => quickAction('rx')} disabled={!hasPatientSelected} title={!hasPatientSelected ? "Select patient first" : ""}>💊 Prescription</button>
+            <button className="quick-btn" onClick={() => quickAction('xray')} disabled={!hasPatientSelected} title={!hasPatientSelected ? "Select patient first" : ""}>🩻 Imaging</button>
           </div>
         </div>
       </div>
