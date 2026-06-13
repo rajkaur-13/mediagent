@@ -1,10 +1,17 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import XRayAnalyzer from './components/XRayAnalyzer';
 import './App.css';
 
 function App() {
+  const welcomeMessage = `🏥 <strong>Welcome to MediAgent!</strong><br/>
+I'm your AI medical assistant.<br/><br/>
+🔹 <strong>To work with a patient:</strong> Search for them above<br/>
+🔹 <strong>To ask a medical question:</strong> Just type your question<br/><br/>
+Selected patient will appear here, and all tools will become available.<br/><br/>
+How can I help you today?`;
+
   const [messages, setMessages] = useState([
-    { id: '1', text: "🏥 **Welcome to MediAgent!**\n\nI'm your AI medical assistant.\n\n🔹 **To work with a patient:** Search for them above using name or MRN\n🔹 **To ask a medical question:** Just type your question\n\nSelected patient will appear here, and all tools will become available.\n\nHow can I help you today?", isUser: false, timestamp: new Date() }
+    { id: '1', text: welcomeMessage, isUser: false, timestamp: new Date() }
   ]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -44,7 +51,7 @@ function App() {
         });
         const data = await response.json();
         setToken(data.token);
-        console.log('✅ Auto-login successful!');
+        console.log('Auto-login successful!');
         fetchAppointments(data.token);
       } catch (error) {
         console.error('Login failed:', error);
@@ -93,7 +100,52 @@ function App() {
     scrollToBottom();
   }, [messages]);
 
-  const sendMessage = async () => {
+  const formatPatientDetails = (patient) => {
+    return `✅ <strong>Patient Selected: ${patient.name}</strong><br/>
+📋 <strong>Demographics:</strong> MRN: ${patient.mrn} | Age: ${patient.age} | Gender: ${patient.gender}<br/>
+🩺 <strong>Medical History:</strong> Allergies: ${patient.allergies?.length > 0 ? patient.allergies.join(', ') : 'None'} | Conditions: ${patient.conditions?.length > 0 ? patient.conditions.join(', ') : 'None'}<br/>
+💊 <strong>Medications:</strong> ${patient.medications?.length > 0 ? patient.medications.join(', ') : 'None'}<br/>
+✅ Tools are now active for ${patient.name}`;
+  };
+
+  const formatMessage = (text) => {
+    if (!text) return '';
+    
+    console.log('=== formatMessage received ===');
+    console.log(text);
+    
+    let formatted = text;
+    
+    // Replace newlines with <br/>
+    formatted = formatted.replace(/\n/g, '<br/>');
+    
+    // Convert markdown bold
+    formatted = formatted.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    
+    // Make patient names clickable
+    const patientNames = [
+      'Sarah Johnson', 'Michael Chen', 'Emily Rodriguez', 
+      'James Williams', 'Maria Garcia', 'Robert'
+    ];
+    
+    patientNames.forEach(name => {
+      const regex = new RegExp(`(${name})`, 'g');
+      formatted = formatted.replace(regex, (match) => {
+        return `<span class="patient-name-link" onclick="window.directSelectPatient('${match}')">${match}</span>`;
+      });
+    });
+    
+    formatted = formatted.replace(/robert/g, (match) => {
+      return `<span class="patient-name-link" onclick="window.directSelectPatient('Robert')">Robert</span>`;
+    });
+    
+    console.log('=== after formatting ===');
+    console.log(formatted);
+    
+    return formatted;
+  };
+
+  const sendMessage = useCallback(async () => {
     if (!input.trim() || !token) return;
 
     const userMessage = { id: Date.now().toString(), text: input, isUser: true, timestamp: new Date() };
@@ -109,22 +161,76 @@ function App() {
       });
       const data = await response.json();
       
+      console.log('=== API Response ===');
+      console.log(data);
+      
       if (data.patient) {
         setCurrentPatient(data.patient);
       }
       
-      setMessages(prev => [...prev, { id: (Date.now()+1).toString(), text: data.reply, isUser: false, timestamp: new Date() }]);
+      const formattedMessage = formatMessage(data.reply);
+      setMessages(prev => [...prev, { id: (Date.now()+1).toString(), text: formattedMessage, isUser: false, timestamp: new Date() }]);
       
       if (input.toLowerCase().includes('schedule') || input.toLowerCase().includes('appointment')) {
         fetchAppointments(token);
       }
     } catch (error) {
-      setMessages(prev => [...prev, { id: (Date.now()+1).toString(), text: 'Error: ' + error.message, isUser: false, timestamp: new Date() }]);
+      console.error('Error:', error);
+      setMessages(prev => [...prev, { id: (Date.now()+1).toString(), text: '❌ Error: ' + error.message, isUser: false, timestamp: new Date() }]);
     }
     setLoading(false);
-  };
+  }, [input, token]);
 
-  const handleKeyPress = (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } };
+  const handleDirectPatientSelect = useCallback(async (patientName) => {
+    if (!token) return;
+    
+    setLoading(true);
+    
+    try {
+      const response = await fetch('http://localhost:8000/api/chat/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ message: `Show me ${patientName}`, session_id: 'direct_select_' + Date.now() })
+      });
+      const data = await response.json();
+      
+      if (data.patient) {
+        setCurrentPatient(data.patient);
+        const formattedMessage = formatMessage(data.reply);
+        
+        const systemMessage = { 
+          id: Date.now().toString(), 
+          text: formattedMessage, 
+          isUser: false, 
+          timestamp: new Date() 
+        };
+        setMessages(prev => [...prev, systemMessage]);
+        scrollToBottom();
+      } else {
+        const errorMessage = formatMessage(`❌ Patient "${patientName}" not found. Please check the name.`);
+        setMessages(prev => [...prev, { id: Date.now().toString(), text: errorMessage, isUser: false, timestamp: new Date() }]);
+      }
+    } catch (error) {
+      console.error('Failed to select patient:', error);
+      const errorMessage = formatMessage(`❌ Error selecting patient. Please try again.`);
+      setMessages(prev => [...prev, { id: Date.now().toString(), text: errorMessage, isUser: false, timestamp: new Date() }]);
+    } finally {
+      setLoading(false);
+    }
+  }, [token]);
+
+  useEffect(() => {
+    window.directSelectPatient = (name) => {
+      handleDirectPatientSelect(name);
+    };
+  }, [handleDirectPatientSelect]);
+
+  const handleKeyPress = (e) => { 
+    if (e.key === 'Enter' && !e.shiftKey) { 
+      e.preventDefault(); 
+      sendMessage(); 
+    } 
+  };
 
   const handleAddPatient = async () => {
     if (!newPatient.name) {
@@ -148,11 +254,10 @@ function App() {
       });
       
       if (response.ok) {
-        alert(`✅ Patient ${newPatient.name} added successfully!`);
+        alert(`Patient ${newPatient.name} added successfully!`);
         setShowAddPatient(false);
         setNewPatient({ name: '', age: '', gender: 'Male', phone: '', email: '', conditions: '', allergies: '' });
-        setInput(`Show me ${newPatient.name}`);
-        setTimeout(() => sendMessage(), 100);
+        handleDirectPatientSelect(newPatient.name);
       } else {
         const error = await response.json();
         alert('Error: ' + (error.detail || 'Failed to add patient'));
@@ -164,7 +269,7 @@ function App() {
 
   const handleGeneratePrescription = async () => {
     if (!currentPatient) {
-      alert('❌ Please select a patient first');
+      alert('Please select a patient first');
       return;
     }
 
@@ -188,10 +293,9 @@ function App() {
       });
       
       if (response.ok) {
-        alert(`✅ Prescription generated for ${currentPatient.name}!`);
+        alert(`Prescription generated for ${currentPatient.name}!`);
         setPrescription({ medication: '', dosage: '', frequency: 'Once daily', duration: '7 days', instructions: '' });
-        setInput(`Show me prescriptions for ${currentPatient.name}`);
-        setTimeout(() => sendMessage(), 100);
+        handleDirectPatientSelect(currentPatient.name);
       } else {
         alert('Error generating prescription');
       }
@@ -202,15 +306,15 @@ function App() {
 
   const handleSaveSoapNote = () => {
     if (!currentPatient) {
-      alert('❌ Please select a patient first');
+      alert('Please select a patient first');
       return;
     }
-    alert(`✅ SOAP note saved for ${currentPatient.name}!`);
+    alert(`SOAP note saved for ${currentPatient.name}!`);
   };
 
   const quickAction = (action) => {
     if (!currentPatient && action !== 'schedule') {
-      alert('❌ Please select a patient first');
+      alert('Please select a patient first');
       return;
     }
     
@@ -224,13 +328,11 @@ function App() {
     setTimeout(() => sendMessage(), 100);
   };
 
-  // Get upcoming appointments (next 7 days)
   const upcomingAppointments = recentAppointments
     .filter(apt => new Date(apt.date) >= new Date())
     .sort((a, b) => new Date(a.date) - new Date(b.date))
     .slice(0, 5);
 
-  // Tab labels with patient name when selected
   const getTabLabel = (base, icon) => {
     if (hasPatientSelected) {
       return `${icon} ${base} for ${currentPatient.name.split(' ')[0]}`;
@@ -238,12 +340,16 @@ function App() {
     return `${icon} ${base}`;
   };
 
+  const renderMessage = (text) => {
+    return { __html: text };
+  };
+
   return (
     <div className="app">
       <header className="header">
         <div className="header-left">
           <span className="logo">🏥</span>
-          <span className="title">MediAgent V2</span>
+          <span className="title">MediAgent</span>
           <span className="badge">AI Medical Assistant</span>
         </div>
         <div className="header-center">
@@ -257,7 +363,6 @@ function App() {
       </header>
 
       <div className="main-container">
-        {/* Left Panel - Patient Context */}
         <div className="panel panel-patient">
           <div className="panel-header">📋 Patient Context</div>
           
@@ -307,6 +412,7 @@ function App() {
                 )}
                 <div className="patient-detail">💊 Conditions: {currentPatient.conditions?.join(', ') || 'None'}</div>
                 <div className="patient-detail">📞 Phone: {currentPatient.phone || 'N/A'}</div>
+                <button className="clear-patient-btn" onClick={() => setCurrentPatient(null)}>✖️ Clear Selection</button>
               </>
             ) : (
               <div className="no-patient">
@@ -317,7 +423,7 @@ function App() {
             )}
           </div>
 
-          <div className="vitals-card">
+          <div className="appointments-card">
             <h4>📅 Upcoming Appointments</h4>
             {upcomingAppointments.length > 0 ? (
               upcomingAppointments.map((apt, idx) => (
@@ -325,7 +431,7 @@ function App() {
                   <div className="appointment-patient">{apt.patient_name}</div>
                   <div className="appointment-date">{getRelativeDate(apt.date)}</div>
                   <div className="appointment-time">{apt.time}</div>
-                  <div className="appointment-reason">{apt.reason?.substring(0, 30)}</div>
+                  <div className="appointment-reason" title={apt.reason}>{apt.reason?.substring(0, 40)}...</div>
                 </div>
               ))
             ) : (
@@ -334,7 +440,6 @@ function App() {
           </div>
         </div>
 
-        {/* Middle Panel - Chat */}
         <div className="panel panel-chat">
           <div className="panel-header">💬 Conversation</div>
           <div className="chat-messages">
@@ -342,7 +447,7 @@ function App() {
               <div key={msg.id} className={`message ${msg.isUser ? 'user' : 'ai'}`}>
                 <div className="message-avatar">{msg.isUser ? '👨‍⚕️' : '🤖'}</div>
                 <div className="message-bubble">
-                  <div className="message-text">{msg.text}</div>
+                  <div className="message-text" dangerouslySetInnerHTML={renderMessage(msg.text)} />
                   <div className="message-time">{msg.timestamp.toLocaleTimeString()}</div>
                 </div>
               </div>
@@ -350,7 +455,11 @@ function App() {
             {loading && (
               <div className="message ai">
                 <div className="message-avatar">🤖</div>
-                <div className="message-bubble typing">Typing<span>.</span><span>.</span><span>.</span></div>
+                <div className="message-bubble">
+                  <div className="typing-indicator">
+                    <span></span><span></span><span></span>
+                  </div>
+                </div>
               </div>
             )}
             <div ref={messagesEndRef} />
@@ -367,27 +476,26 @@ function App() {
           </div>
         </div>
 
-        {/* Right Panel - Tools */}
         <div className="panel panel-tools">
           <div className="panel-tabs">
             <button 
               className={`tab ${activeTab === 'soap' ? 'active' : ''} ${!hasPatientSelected ? 'disabled' : ''}`}
               onClick={() => hasPatientSelected && setActiveTab('soap')}
-              title={!hasPatientSelected ? "Select a patient first to use SOAP notes" : ""}
+              title={!hasPatientSelected ? "Select a patient first" : ""}
             >
               {getTabLabel('SOAP', '📝')}
             </button>
             <button 
               className={`tab ${activeTab === 'rx' ? 'active' : ''} ${!hasPatientSelected ? 'disabled' : ''}`}
               onClick={() => hasPatientSelected && setActiveTab('rx')}
-              title={!hasPatientSelected ? "Select a patient first to use prescriptions" : ""}
+              title={!hasPatientSelected ? "Select a patient first" : ""}
             >
               {getTabLabel('Rx', '💊')}
             </button>
             <button 
               className={`tab ${activeTab === 'xray' ? 'active' : ''} ${!hasPatientSelected ? 'disabled' : ''}`}
               onClick={() => hasPatientSelected && setActiveTab('xray')}
-              title={!hasPatientSelected ? "Select a patient first to upload images" : ""}
+              title={!hasPatientSelected ? "Select a patient first" : ""}
             >
               {getTabLabel('Imaging', '🩻')}
             </button>
@@ -418,7 +526,7 @@ function App() {
                     <label>📋 Plan</label>
                     <textarea placeholder="Treatment, follow-up..." value={soapNote.plan} onChange={(e) => setSoapNote({...soapNote, plan: e.target.value})} rows="2" />
                   </div>
-                  <button className="save-btn" onClick={handleSaveSoapNote}>💾 Save SOAP Note for {currentPatient?.name?.split(' ')[0]}</button>
+                  <button className="save-btn" onClick={handleSaveSoapNote}>💾 Save SOAP Note</button>
                 </>
               )}
             </div>
@@ -461,7 +569,7 @@ function App() {
                     <label>📝 Special Instructions</label>
                     <textarea placeholder="e.g., Take with food, Avoid alcohol" value={prescription.instructions} onChange={(e) => setPrescription({...prescription, instructions: e.target.value})} rows="2" />
                   </div>
-                  <button className="save-btn" onClick={handleGeneratePrescription}>💊 Generate Prescription for {currentPatient?.name?.split(' ')[0]}</button>
+                  <button className="save-btn" onClick={handleGeneratePrescription}>💊 Generate Prescription</button>
                 </>
               )}
             </div>
@@ -482,9 +590,9 @@ function App() {
 
           <div className="quick-actions">
             <button className="quick-btn" onClick={() => quickAction('schedule')}>📅 Schedule</button>
-            <button className="quick-btn" onClick={() => quickAction('soap')} disabled={!hasPatientSelected} title={!hasPatientSelected ? "Select patient first" : ""}>📝 SOAP Note</button>
-            <button className="quick-btn" onClick={() => quickAction('rx')} disabled={!hasPatientSelected} title={!hasPatientSelected ? "Select patient first" : ""}>💊 Prescription</button>
-            <button className="quick-btn" onClick={() => quickAction('xray')} disabled={!hasPatientSelected} title={!hasPatientSelected ? "Select patient first" : ""}>🩻 Imaging</button>
+            <button className="quick-btn" onClick={() => quickAction('soap')} disabled={!hasPatientSelected}>📝 SOAP Note</button>
+            <button className="quick-btn" onClick={() => quickAction('rx')} disabled={!hasPatientSelected}>💊 Prescription</button>
+            <button className="quick-btn" onClick={() => quickAction('xray')} disabled={!hasPatientSelected}>🩻 Imaging</button>
           </div>
         </div>
       </div>
