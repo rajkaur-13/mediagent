@@ -42,3 +42,9 @@ async def startup_event():
     print(f"📊 Database: {settings.DATABASE_URL[:50]}...")
 from .api.routes import images
 app.include_router(images.router, prefix="/api/images", tags=["images"])
+from .api.routes import prescriptions
+app.include_router(prescriptions.router, prefix="/api/prescriptions", tags=["prescriptions"])
+from .api.routes import analyze
+app.include_router(analyze.router, prefix="/api/analyze", tags=["analyze"])
+from .api.routes import analyze
+app.include_router(analyze.router, prefix="/api/analyze", tags=["analyze"])

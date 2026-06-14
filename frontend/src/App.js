@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import XRayAnalyzer from './components/XRayAnalyzer';
+import AnalyzeButton from './components/AnalyzeButton';
 import './App.css';
 
 function App() {
@@ -20,6 +21,8 @@ How can I help you today?`;
   const [activeTab, setActiveTab] = useState('soap');
   const [showAddPatient, setShowAddPatient] = useState(false);
   const [recentAppointments, setRecentAppointments] = useState([]);
+  const [currentSoapNoteId, setCurrentSoapNoteId] = useState(null);
+  const [analyzing, setAnalyzing] = useState(false);
   const [prescription, setPrescription] = useState({
     medication: '',
     dosage: '',
@@ -37,6 +40,7 @@ How can I help you today?`;
     allergies: ''
   });
   const [token, setToken] = useState(null);
+  const [showAnalysis, setShowAnalysis] = useState(false);
   const messagesEndRef = useRef(null);
 
   const hasPatientSelected = currentPatient !== null;
@@ -111,21 +115,14 @@ How can I help you today?`;
   const formatMessage = (text) => {
     if (!text) return '';
     
-    console.log('=== formatMessage received ===');
-    console.log(text);
-    
     let formatted = text;
     
-    // Replace newlines with <br/>
     formatted = formatted.replace(/\n/g, '<br/>');
-    
-    // Convert markdown bold
     formatted = formatted.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
     
-    // Make patient names clickable
     const patientNames = [
       'Sarah Johnson', 'Michael Chen', 'Emily Rodriguez', 
-      'James Williams', 'Maria Garcia', 'Robert'
+      'James Williams', 'Maria Garcia', 'Robert', 'John Smith'
     ];
     
     patientNames.forEach(name => {
@@ -139,10 +136,15 @@ How can I help you today?`;
       return `<span class="patient-name-link" onclick="window.directSelectPatient('Robert')">Robert</span>`;
     });
     
-    console.log('=== after formatting ===');
-    console.log(formatted);
-    
     return formatted;
+  };
+
+  const handleAnalysisComplete = (analysis) => {
+    if (analysis.formatted_response) {
+      const formattedMessage = formatMessage(analysis.formatted_response);
+      setMessages(prev => [...prev, { id: Date.now().toString(), text: formattedMessage, isUser: false, timestamp: new Date() }]);
+      scrollToBottom();
+    }
   };
 
   const sendMessage = useCallback(async () => {
@@ -160,9 +162,6 @@ How can I help you today?`;
         body: JSON.stringify({ message: input, session_id: 'web_' + Date.now() })
       });
       const data = await response.json();
-      
-      console.log('=== API Response ===');
-      console.log(data);
       
       if (data.patient) {
         setCurrentPatient(data.patient);
@@ -304,12 +303,41 @@ How can I help you today?`;
     }
   };
 
-  const handleSaveSoapNote = () => {
+  const handleSaveSoapNote = async () => {
     if (!currentPatient) {
       alert('Please select a patient first');
       return;
     }
-    alert(`SOAP note saved for ${currentPatient.name}!`);
+    
+    const soapContent = `Generate SOAP note for ${currentPatient.name} with:
+Subjective: ${soapNote.subjective}
+Objective: ${soapNote.objective}
+Assessment: ${soapNote.assessment}
+Plan: ${soapNote.plan}`;
+    
+    try {
+      const response = await fetch('http://localhost:8000/api/chat/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ 
+          message: soapContent,
+          session_id: 'web_' + Date.now()
+        })
+      });
+      
+      const data = await response.json();
+      const formattedMessage = formatMessage(data.reply);
+      setMessages(prev => [...prev, { id: (Date.now()+1).toString(), text: formattedMessage, isUser: false, timestamp: new Date() }]);
+      
+      const idMatch = data.reply.match(/ID: ([a-f0-9-]+)/i);
+      if (idMatch) {
+        setCurrentSoapNoteId(idMatch[1]);
+      }
+      
+      alert(`SOAP note saved for ${currentPatient.name}!`);
+    } catch (error) {
+      alert('Error saving SOAP note: ' + error.message);
+    }
   };
 
   const quickAction = (action) => {
@@ -421,6 +449,13 @@ How can I help you today?`;
                 <small>Search above by name or MRN</small>
               </div>
             )}
+            {token && currentPatient && (
+              <AnalyzeButton 
+                patientId={currentPatient.id} 
+                token={token} 
+                onAnalysisComplete={handleAnalysisComplete}
+              />
+            )}
           </div>
 
           <div className="appointments-card">
@@ -511,20 +546,40 @@ How can I help you today?`;
               ) : (
                 <>
                   <div className="soap-field">
-                    <label>📋 Subjective</label>
-                    <textarea placeholder="Patient's symptoms, history..." value={soapNote.subjective} onChange={(e) => setSoapNote({...soapNote, subjective: e.target.value})} rows="2" />
+                    <label>📋 Subjective (Patient's words/symptoms)</label>
+                    <textarea 
+                      placeholder="e.g., Patient complains of chest pain for 2 hours, radiating to left arm..."
+                      value={soapNote.subjective} 
+                      onChange={(e) => setSoapNote({...soapNote, subjective: e.target.value})} 
+                      rows="4" 
+                    />
                   </div>
                   <div className="soap-field">
-                    <label>🔬 Objective</label>
-                    <textarea placeholder="Exam findings, vitals..." value={soapNote.objective} onChange={(e) => setSoapNote({...soapNote, objective: e.target.value})} rows="2" />
+                    <label>🔬 Objective (Vitals, exam findings, test results)</label>
+                    <textarea 
+                      placeholder="e.g., BP 165/95, HR 112, O2 92%, ECG shows ST depression..."
+                      value={soapNote.objective} 
+                      onChange={(e) => setSoapNote({...soapNote, objective: e.target.value})} 
+                      rows="4" 
+                    />
                   </div>
                   <div className="soap-field">
-                    <label>🧠 Assessment</label>
-                    <textarea placeholder="Diagnosis, differential..." value={soapNote.assessment} onChange={(e) => setSoapNote({...soapNote, assessment: e.target.value})} rows="2" />
+                    <label>🧠 Assessment (Diagnosis, differential)</label>
+                    <textarea 
+                      placeholder="e.g., Acute coronary syndrome suspected. Risk factors: diabetes, hypertension..."
+                      value={soapNote.assessment} 
+                      onChange={(e) => setSoapNote({...soapNote, assessment: e.target.value})} 
+                      rows="4" 
+                    />
                   </div>
                   <div className="soap-field">
-                    <label>📋 Plan</label>
-                    <textarea placeholder="Treatment, follow-up..." value={soapNote.plan} onChange={(e) => setSoapNote({...soapNote, plan: e.target.value})} rows="2" />
+                    <label>📋 Plan (Treatment, follow-up, referrals)</label>
+                    <textarea 
+                      placeholder="e.g., Admit to cardiology, start aspirin, order troponin, cardiology consult..."
+                      value={soapNote.plan} 
+                      onChange={(e) => setSoapNote({...soapNote, plan: e.target.value})} 
+                      rows="4" 
+                    />
                   </div>
                   <button className="save-btn" onClick={handleSaveSoapNote}>💾 Save SOAP Note</button>
                 </>

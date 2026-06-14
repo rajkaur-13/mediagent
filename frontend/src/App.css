@@ -840,3 +840,67 @@ p, .message-text, .patient-detail, .vital-row, .appointment-item, .soap-field la
   color: #94a3b8;
   font-size: 14px;
 }
+
+.analyze-btn {
+  width: 100%;
+  padding: 12px;
+  background: #8b5cf6;
+  color: white;
+  border: none;
+  border-radius: 30px;
+  cursor: pointer;
+  font-weight: 500;
+  margin-top: 10px;
+  font-family: 'Inter', sans-serif;
+  transition: background 0.2s;
+}
+
+.analyze-btn:hover {
+  background: #7c3aed;
+}
+
+.analyze-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.analyze-full-btn {
+  width: 100%;
+  padding: 12px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 30px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+  margin-top: 16px;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.analyze-full-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.analyze-full-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.analysis-full-result {
+  margin-top: 16px;
+  padding: 16px;
+  background: #f8fafc;
+  border-radius: 16px;
+  border-left: 4px solid #667eea;
+  font-size: 13px;
+  line-height: 1.5;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.analysis-full-result strong {
+  color: #1e293b;
+}
