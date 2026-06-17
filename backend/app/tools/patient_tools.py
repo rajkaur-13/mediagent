@@ -3,6 +3,7 @@ from ..models.patient import Patient
 from ..models.soap_note import SOAPNote
 from ..models.prescription import Prescription
 from ..models.appointment import Appointment
+from datetime import datetime
 
 def search_patient(name: str, db: Session, doctor_id: str = None) -> dict:
     """Search for a patient by name - returns ALL patient data with existing records"""
@@ -16,7 +17,7 @@ def search_patient(name: str, db: Session, doctor_id: str = None) -> dict:
     
     patient = patients[0]
     
-    # Get all SOAP notes
+    # Get all SOAP notes with FULL content
     soap_notes = db.query(SOAPNote).filter(
         SOAPNote.patient_id == patient.id
     ).order_by(SOAPNote.visit_date.desc()).all()
@@ -34,14 +35,37 @@ def search_patient(name: str, db: Session, doctor_id: str = None) -> dict:
     # Get image analysis count
     analysis_count = len(patient.analysis_history or [])
     
-    # Format SOAP notes summary
+    # Format SOAP notes with FULL content - FIXED
     soap_summary = []
     for note in soap_notes:
         content = note.content if isinstance(note.content, dict) else {}
+        
+        # Format date properly
+        if note.visit_date:
+            if isinstance(note.visit_date, datetime):
+                visit_date_str = note.visit_date.strftime("%Y-%m-%d")
+            else:
+                visit_date_str = str(note.visit_date)[:10]
+        else:
+            visit_date_str = "Unknown"
+        
+        # Get the full SOAP content
+        subjective = content.get('subjective', {}).get('chief_complaint', 'Not documented')
+        objective = content.get('objective', {}).get('physical_exam', 'Not documented')
+        assessment = content.get('assessment', {}).get('diagnosis', 'Not documented')
+        plan = content.get('plan', {}).get('follow_up', 'Not documented')
+        
+        # Create a readable summary
+        full_text = f"Subj: {subjective[:100]}... | Diag: {assessment[:80]}"
+        
         soap_summary.append({
             "id": str(note.id),
-            "date": note.visit_date.strftime("%Y-%m-%d") if note.visit_date else "Unknown",
-            "chief_complaint": content.get('subjective', {}).get('chief_complaint', 'No data')[:50]
+            "visit_date": visit_date_str,
+            "subjective": subjective[:200],
+            "objective": objective[:200],
+            "assessment": assessment[:200],
+            "plan": plan[:200],
+            "full_text": full_text
         })
     
     # Format prescriptions summary
@@ -49,9 +73,18 @@ def search_patient(name: str, db: Session, doctor_id: str = None) -> dict:
     for rx in prescriptions:
         content = rx.content if isinstance(rx.content, dict) else {}
         med = content.get('medication', {})
+        rx_date = rx.prescribed_date
+        if rx_date:
+            if isinstance(rx_date, datetime):
+                date_str = rx_date.strftime("%Y-%m-%d")
+            else:
+                date_str = str(rx_date)[:10]
+        else:
+            date_str = "Unknown"
+        
         rx_summary.append({
             "id": str(rx.id),
-            "date": rx.prescribed_date.strftime("%Y-%m-%d") if rx.prescribed_date else "Unknown",
+            "date": date_str,
             "medication": med.get('name', 'Unknown'),
             "dosage": med.get('dosage', 'N/A')
         })
@@ -59,9 +92,12 @@ def search_patient(name: str, db: Session, doctor_id: str = None) -> dict:
     # Format image analysis summary
     image_summary = []
     for img in patient.analysis_history or []:
+        img_date = img.get('analyzed_at', '')
+        if img_date and len(img_date) > 10:
+            img_date = img_date[:10]
         image_summary.append({
             "id": img.get('id', ''),
-            "date": img.get('analyzed_at', '')[:10] if img.get('analyzed_at') else "Unknown",
+            "date": img_date or "Unknown",
             "findings": img.get('findings', 'No findings')[:60],
             "image_type": img.get('image_type', 'X-ray').replace('_', ' ').title()
         })
@@ -72,8 +108,9 @@ def search_patient(name: str, db: Session, doctor_id: str = None) -> dict:
         apt_summary.append({
             "id": str(apt.id),
             "date": apt.date.strftime("%Y-%m-%d") if apt.date else "Unknown",
-            "time": apt.time.strftime("%H:%M") if apt.time else "Unknown",
-            "reason": apt.reason or "Follow-up"
+            "time": apt.time.strftime("%I:%M %p") if apt.time else "Unknown",
+            "reason": apt.reason or "Follow-up",
+            "severity": getattr(apt, 'severity', None)
         })
     
     return {
@@ -132,28 +169,57 @@ def get_patient_by_id(patient_id: str, db: Session) -> dict:
     soap_summary = []
     for note in soap_notes:
         content = note.content if isinstance(note.content, dict) else {}
+        
+        if note.visit_date:
+            if isinstance(note.visit_date, datetime):
+                visit_date_str = note.visit_date.strftime("%Y-%m-%d")
+            else:
+                visit_date_str = str(note.visit_date)[:10]
+        else:
+            visit_date_str = "Unknown"
+        
+        subjective = content.get('subjective', {}).get('chief_complaint', 'Not documented')
+        objective = content.get('objective', {}).get('physical_exam', 'Not documented')
+        assessment = content.get('assessment', {}).get('diagnosis', 'Not documented')
+        plan = content.get('plan', {}).get('follow_up', 'Not documented')
+        
         soap_summary.append({
             "id": str(note.id),
-            "date": note.visit_date.strftime("%Y-%m-%d") if note.visit_date else "Unknown",
-            "chief_complaint": content.get('subjective', {}).get('chief_complaint', 'No data')[:50]
+            "visit_date": visit_date_str,
+            "subjective": subjective[:200],
+            "objective": objective[:200],
+            "assessment": assessment[:200],
+            "plan": plan[:200]
         })
     
     rx_summary = []
     for rx in prescriptions:
         content = rx.content if isinstance(rx.content, dict) else {}
         med = content.get('medication', {})
+        rx_date = rx.prescribed_date
+        if rx_date:
+            if isinstance(rx_date, datetime):
+                date_str = rx_date.strftime("%Y-%m-%d")
+            else:
+                date_str = str(rx_date)[:10]
+        else:
+            date_str = "Unknown"
+        
         rx_summary.append({
             "id": str(rx.id),
-            "date": rx.prescribed_date.strftime("%Y-%m-%d") if rx.prescribed_date else "Unknown",
+            "date": date_str,
             "medication": med.get('name', 'Unknown'),
             "dosage": med.get('dosage', 'N/A')
         })
     
     image_summary = []
     for img in patient.analysis_history or []:
+        img_date = img.get('analyzed_at', '')
+        if img_date and len(img_date) > 10:
+            img_date = img_date[:10]
         image_summary.append({
             "id": img.get('id', ''),
-            "date": img.get('analyzed_at', '')[:10] if img.get('analyzed_at') else "Unknown",
+            "date": img_date or "Unknown",
             "findings": img.get('findings', 'No findings')[:60],
             "image_type": img.get('image_type', 'X-ray').replace('_', ' ').title()
         })
@@ -163,7 +229,7 @@ def get_patient_by_id(patient_id: str, db: Session) -> dict:
         apt_summary.append({
             "id": str(apt.id),
             "date": apt.date.strftime("%Y-%m-%d") if apt.date else "Unknown",
-            "time": apt.time.strftime("%H:%M") if apt.time else "Unknown",
+            "time": apt.time.strftime("%I:%M %p") if apt.time else "Unknown",
             "reason": apt.reason or "Follow-up"
         })
     

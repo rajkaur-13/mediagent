@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, DateTime, Date, Time, ForeignKey
+from sqlalchemy import Column, DateTime, Date, Time, ForeignKey, String
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
 import uuid
@@ -14,4 +14,5 @@ class Appointment(Base):
     time = Column(Time, nullable=False)
     reason = Column(String(500))
     status = Column(String(50), default="scheduled")
+    severity = Column(String(20), default=None)
     created_at = Column(DateTime(timezone=True), server_default=func.now())

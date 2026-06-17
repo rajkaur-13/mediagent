@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .config import settings
-from .api.routes import chat, patients, appointments, soap, xray, auth
+from .api.routes import chat, patients, appointments, soap, xray, auth, images, prescriptions, analyze
 from .db.database import engine, Base
 
 # Create tables on startup
@@ -27,6 +27,9 @@ app.include_router(patients.router, prefix="/api/patients", tags=["patients"])
 app.include_router(appointments.router, prefix="/api/appointments", tags=["appointments"])
 app.include_router(soap.router, prefix="/api/soap", tags=["soap"])
 app.include_router(xray.router, prefix="/api/xray", tags=["xray"])
+app.include_router(images.router, prefix="/api/images", tags=["images"])
+app.include_router(prescriptions.router, prefix="/api/prescriptions", tags=["prescriptions"])
+app.include_router(analyze.router, prefix="/api/analyze", tags=["analyze"])
 
 @app.get("/")
 async def root():
@@ -40,11 +43,4 @@ async def health_check():
 async def startup_event():
     print("🚀 MediAgent API starting...")
     print(f"📊 Database: {settings.DATABASE_URL[:50]}...")
-from .api.routes import images
-app.include_router(images.router, prefix="/api/images", tags=["images"])
-from .api.routes import prescriptions
-app.include_router(prescriptions.router, prefix="/api/prescriptions", tags=["prescriptions"])
-from .api.routes import analyze
-app.include_router(analyze.router, prefix="/api/analyze", tags=["analyze"])
-from .api.routes import analyze
-app.include_router(analyze.router, prefix="/api/analyze", tags=["analyze"])
+

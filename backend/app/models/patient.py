@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Integer, Date, DateTime, ARRAY
+from sqlalchemy import Column, String, Integer, Date, DateTime, ARRAY, JSON
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
 import uuid
@@ -18,4 +18,5 @@ class Patient(Base):
     allergies = Column(ARRAY(String), default=[])
     conditions = Column(ARRAY(String), default=[])
     medications = Column(ARRAY(String), default=[])
+    analysis_history = Column(JSON, default=[])  # NEW: Store X-ray/analysis results
     created_at = Column(DateTime(timezone=True), server_default=func.now())
