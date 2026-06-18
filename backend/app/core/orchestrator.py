@@ -1,5 +1,6 @@
 import re
-from typing import Dict, Any
+import json
+from typing import Dict, Any, List, Optional
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
 from ..services.llm_service import get_llm_response
@@ -14,6 +15,7 @@ from ..tools.severity_analyzer import analyze_severity, generate_slot_message
 from ..models.patient import Patient
 from ..models.appointment import Appointment
 from ..models.soap_note import SOAPNote
+from ..models.prescription import Prescription
 
 class AgentOrchestrator:
     def __init__(self, db: Session, doctor_id: str):
@@ -148,10 +150,177 @@ class AgentOrchestrator:
         
         return "".join(sections)
     
+    def _detect_intent_with_llm(self, message: str) -> Dict[str, Any]:
+        """Use LLM to detect intent - handles ALL variations, typos, questions, and commands"""
+        
+        prompt = f"""
+        You are an intent classifier for a medical AI assistant. Classify the doctor's message into ONE action.
+
+        Doctor's message: "{message}"
+
+        ACTIONS:
+        1. "general" - ANY complex query, question, or multi-patient query
+           Examples: 
+           - "who hasn't had a SOAP note yet"
+           - "show me patients without prescriptions"
+           - "which patients need appointments"
+           - "how to create SOAP note"
+           - "what is hypertension"
+           - "hello"
+           - "help me with SOAP notes"
+
+        2. "search_patient" - ONLY if doctor wants ONE specific patient
+           Examples: "show Sarah Johnson", "find Michael", "sarah"
+
+        3. "get_all_patients" - ONLY if doctor wants to see ALL patients (no filters)
+           Examples: "show all patients", "list patients", "all my patients"
+
+        4. "schedule_appointment" - Booking an appointment
+           Examples: "schedule appointment for John", "book Michael tomorrow"
+
+        5. "get_appointments" - Viewing appointments
+           Examples: "show appointments", "list my appointments"
+
+        6. "generate_soap_note" - Direct command to create SOAP note
+           Examples: "generate SOAP note", "create SOAP note for Sarah"
+
+        7. "get_soap_notes_status" - Asking if a SOAP note exists for current patient
+           Examples: "is soap note created for her", "does she have a SOAP note"
+
+        8. "generate_prescription" - Creating a prescription
+           Examples: "write prescription", "prescribe amoxicillin"
+
+        IMPORTANT RULES:
+        - If the message asks about MULTIPLE patients (contains "patients", "who", "which", "all without") → ALWAYS use "general"
+        - If the message contains "how to", "how do i", "help me", "what is", "explain" → ALWAYS use "general"
+        - If the message asks about patients without SOAP notes/prescriptions/appointments → ALWAYS use "general"
+        - Only use "search_patient" if it's ONE specific name
+
+        Return ONLY JSON: {{"action": "action_name", "params": {{...}}}}
+        """
+
+        try:
+            response = get_llm_response(prompt, [], max_tokens=200)
+            response = response.replace('```json', '').replace('```', '').strip()
+            result = json.loads(response)
+            print(f"🤖 LLM Intent: {result}")
+            return result
+        except Exception as e:
+            print(f"⚠️ LLM intent failed: {e}")
+            return {"action": "general", "params": {}}
+    
+    def _find_patients_without_soap_notes(self) -> str:
+        """Find all patients who don't have SOAP notes"""
+        all_patients = self.db.query(Patient).all()
+        
+        patients_without_soap = []
+        for patient in all_patients:
+            meaningful = self._get_meaningful_soap_notes(patient.id)
+            if not meaningful:
+                patients_without_soap.append(patient)
+        
+        if not patients_without_soap:
+            return "✅ All patients have SOAP notes created!"
+        
+        result = f"📋 Found {len(patients_without_soap)} patients without SOAP notes:\n\n"
+        for patient in patients_without_soap:
+            result += f"• {patient.name} (MRN: {patient.mrn}, Age: {patient.age})\n"
+        
+        result += "\n💡 Type 'Generate SOAP note for [patient name]' to create one."
+        return result
+    
+    def _find_patients_without_prescriptions(self) -> str:
+        """Find all patients who don't have active prescriptions"""
+        all_patients = self.db.query(Patient).all()
+        
+        patients_without_rx = []
+        for patient in all_patients:
+            prescriptions = self.db.query(Prescription).filter(
+                Prescription.patient_id == patient.id,
+                Prescription.status == "active"
+            ).all()
+            if not prescriptions:
+                patients_without_rx.append(patient)
+        
+        if not patients_without_rx:
+            return "✅ All patients have active prescriptions!"
+        
+        result = f"📋 Found {len(patients_without_rx)} patients without prescriptions:\n\n"
+        for patient in patients_without_rx:
+            result += f"• {patient.name} (MRN: {patient.mrn}, Age: {patient.age})\n"
+        
+        result += "\n💡 Type 'Write prescription for [patient name]' to create one."
+        return result
+    
+    def _find_patients_without_appointments(self) -> str:
+        """Find all patients who don't have upcoming appointments"""
+        all_patients = self.db.query(Patient).all()
+        
+        today = datetime.now().date()
+        patients_without_appointments = []
+        for patient in all_patients:
+            appointments = self.db.query(Appointment).filter(
+                Appointment.patient_id == patient.id,
+                Appointment.date >= today,
+                Appointment.status == "scheduled"
+            ).all()
+            if not appointments:
+                patients_without_appointments.append(patient)
+        
+        if not patients_without_appointments:
+            return "✅ All patients have upcoming appointments scheduled!"
+        
+        result = f"📋 Found {len(patients_without_appointments)} patients without upcoming appointments:\n\n"
+        for patient in patients_without_appointments:
+            result += f"• {patient.name} (MRN: {patient.mrn}, Age: {patient.age})\n"
+        
+        result += "\n💡 Type 'Schedule appointment for [patient name]' to book one."
+        return result
+    
+    def _handle_complex_query(self, message: str) -> Optional[str]:
+        """Handle complex queries that require database checks"""
+        message_lower = message.lower().strip()
+        
+        # Check for "without SOAP note" type queries
+        if "soap note" in message_lower and ("without" in message_lower or "no" in message_lower or "haven't" in message_lower or "hasn't" in message_lower or "not created" in message_lower or "missing" in message_lower):
+            return self._find_patients_without_soap_notes()
+        
+        # Check for "without prescription" type queries
+        if "prescription" in message_lower and ("without" in message_lower or "no" in message_lower or "haven't" in message_lower or "missing" in message_lower):
+            return self._find_patients_without_prescriptions()
+        
+        # Check for "without appointment" type queries
+        if "appointment" in message_lower and ("without" in message_lower or "no" in message_lower or "need follow-up" in message_lower or "missing" in message_lower):
+            return self._find_patients_without_appointments()
+        
+        # Check for "patients with no" type queries
+        if "patients" in message_lower and "no" in message_lower:
+            if "soap" in message_lower or "note" in message_lower:
+                return self._find_patients_without_soap_notes()
+            if "prescription" in message_lower or "rx" in message_lower:
+                return self._find_patients_without_prescriptions()
+            if "appointment" in message_lower:
+                return self._find_patients_without_appointments()
+        
+        return None
+    
     def process_message(self, user_message: str, image_base64: str = None) -> Dict[str, Any]:
         self.conversation_history.append({"role": "user", "content": user_message})
         
-        intent = self._detect_intent(user_message)
+        # FIRST: Check for complex queries BEFORE LLM intent detection
+        complex_response = self._handle_complex_query(user_message)
+        if complex_response:
+            response_text = complex_response
+            self.conversation_history.append({"role": "assistant", "content": response_text})
+            return {
+                "reply": response_text,
+                "patient": None,
+                "tool_calls": ["complex_query"],
+                "session_id": None
+            }
+        
+        # Use LLM for intent detection
+        intent = self._detect_intent_with_llm(user_message)
         print(f"🔍 Detected intent: {intent}")
         
         result = None
@@ -206,17 +375,42 @@ class AgentOrchestrator:
             else:
                 response_text = "No patients found in your clinic"
         
+        elif intent["action"] == "get_soap_notes_status":
+            if self.current_patient_id:
+                meaningful = self._get_meaningful_soap_notes(self.current_patient_id)
+                
+                if meaningful and len(meaningful) > 0:
+                    response_text = f"✅ Yes, {len(meaningful)} SOAP note(s) have been created for {self.current_patient_name}."
+                    latest = meaningful[0]
+                    content = latest.content if isinstance(latest.content, dict) else {}
+                    diagnosis = content.get('assessment', {}).get('diagnosis', 'No diagnosis')
+                    visit_date = latest.visit_date
+                    if visit_date:
+                        if isinstance(visit_date, datetime):
+                            date_str = visit_date.strftime("%Y-%m-%d")
+                        else:
+                            date_str = str(visit_date)[:10]
+                    else:
+                        date_str = "Unknown"
+                    response_text += f"\n\n📅 Latest SOAP note from {date_str}:\n🧠 Diagnosis: {diagnosis}"
+                    response_text += f"\n\n💡 Type 'Show SOAP note' to view the full note."
+                else:
+                    response_text = f"❌ No SOAP notes have been created for {self.current_patient_name} yet.\n\n💡 Type 'Generate SOAP note' to create one."
+            else:
+                response_text = "❌ Please select a patient first. Type 'Show me [patient name]'"
+        
         elif intent["action"] == "schedule_appointment":
-            name_match = re.search(r'(?:for|with)\s+([A-Za-z]+(?:\s+[A-Za-z]+)?)', user_message, re.IGNORECASE)
-            patient_name = name_match.group(1).title() if name_match else self.current_patient_name
+            patient_name = intent.get("patient_name")
+            if not patient_name and self.current_patient_name:
+                patient_name = self.current_patient_name
             
             if not patient_name:
                 response_text = "❌ Please specify a patient name. Example: 'Schedule appointment for Michael Chen tomorrow at 2 PM'"
             else:
                 result = schedule_appointment(
                     patient_name,
-                    0,
-                    "09:00 AM",
+                    intent.get("weeks_from_now", 0),
+                    intent.get("time", "09:00 AM"),
                     user_message,
                     self.db,
                     self.doctor_id
@@ -250,8 +444,7 @@ class AgentOrchestrator:
         
         elif intent["action"] == "generate_prescription":
             if self.current_patient_id:
-                med_match = re.search(r'(?:prescribe|for)\s+(\w+(?:\s+\w+)?)', user_message, re.IGNORECASE)
-                medication = med_match.group(1).title() if med_match else "Unknown"
+                medication = intent.get("medication", "Unknown")
                 
                 result = generate_prescription(
                     patient_id=self.current_patient_id,
@@ -320,36 +513,3 @@ class AgentOrchestrator:
             "tool_calls": [intent["action"]] if intent["action"] != "general" else [],
             "session_id": None
         }
-    
-    def _detect_intent(self, message: str) -> Dict[str, Any]:
-        message_lower = message.lower().strip()
-        
-        if re.search(r'(?:generate|create|make|new).*soap note', message_lower):
-            return {"action": "generate_soap_note"}
-        
-        if "all patients" in message_lower or "show all patients" in message_lower or "list patients" in message_lower:
-            return {"action": "get_all_patients"}
-        
-        if "show me" in message_lower or "find" in message_lower:
-            name_match = re.search(r'(?:show me|find)\s+(?:patient\s+)?([A-Za-z]+(?:\s+[A-Za-z]+)?)', message_lower)
-            if name_match:
-                return {"action": "search_patient", "patient_name": name_match.group(1).title()}
-        
-        known_patients = ['sarah', 'michael', 'emily', 'james', 'maria', 'robert', 'john']
-        for name in known_patients:
-            if message_lower == name or message_lower.startswith(name):
-                return {"action": "search_patient", "patient_name": name.title()}
-        
-        if "soap" in message_lower:
-            return {"action": "generate_soap_note"}
-        
-        if "prescription" in message_lower or "rx" in message_lower or "prescribe" in message_lower:
-            return {"action": "generate_prescription"}
-        
-        if "appointment" in message_lower:
-            if "schedule" in message_lower or "book" in message_lower or "make" in message_lower:
-                return {"action": "schedule_appointment"}
-            else:
-                return {"action": "get_appointments"}
-        
-        return {"action": "general"}
