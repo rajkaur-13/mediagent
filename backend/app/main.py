@@ -11,10 +11,18 @@ print("✅ Database tables ready")
 
 app = FastAPI(title=settings.APP_NAME, debug=settings.DEBUG)
 
-# Configure CORS - Allow all for development
+
+
+# Configure CORS - Allow Vercel frontend and local development
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://localhost:5173", "http://127.0.0.1:3000"],
+    allow_origins=[
+        "https://mediagent-eta.vercel.app",   # Your Vercel frontend
+        "http://localhost:3000",              # Local React dev
+        "http://localhost:5173",              # Local Vite dev
+        "http://127.0.0.1:3000",              # Local alternative
+        "https://mediagent-pn7o.onrender.com" # Your backend itself
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
