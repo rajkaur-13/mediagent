@@ -19,3 +19,4 @@ numpy>=1.26.0,<2.0.0
 setuptools>=68.0.0
 wheel>=0.41.0
 chromadb==0.4.22
+sentence-transformers==2.2.2
