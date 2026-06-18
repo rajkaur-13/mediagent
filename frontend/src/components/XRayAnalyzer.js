@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-
+const API_URL = 'https://mediagent-pn7o.onrender.com';
 function XRayAnalyzer({ patientId, token, onAnalysisComplete }) {
   const [selectedFile, setSelectedFile] = useState(null);
   const [imageType, setImageType] = useState('chest_xray');
@@ -48,7 +48,8 @@ function XRayAnalyzer({ patientId, token, onAnalysisComplete }) {
 
     try {
       // Upload and analyze in one call
-      const response = await fetch(`http://localhost:8000/api/images/upload/${patientId}?analyze=true&image_type=${imageType}`, {
+      
+      const response = await fetch(`${API_URL}/api/images/upload/${patientId}?analyze=true&image_type=${imageType}`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`

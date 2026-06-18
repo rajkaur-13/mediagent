@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+const API_URL = 'https://mediagent-pn7o.onrender.com';
 
 function AnalyzeButton({ patientId, token, onAnalysisComplete }) {
   const [analyzing, setAnalyzing] = useState(false);
@@ -13,7 +14,7 @@ function AnalyzeButton({ patientId, token, onAnalysisComplete }) {
     setAnalyzing(true);
     
     try {
-      const response = await fetch(`http://localhost:8000/api/analyze/full/${patientId}`, {
+      const response = await fetch(`${API_URL}/api/analyze/full/${patientId}`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

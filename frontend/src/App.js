@@ -3,6 +3,8 @@ import XRayAnalyzer from './components/XRayAnalyzer';
 import AnalyzeButton from './components/AnalyzeButton';
 import './App.css';
 
+const API_URL = 'https://mediagent-pn7o.onrender.com';
+
 function App() {
   const welcomeMessage = `🏥 <strong>Welcome to MediAgent!</strong><br/>
 I'm your AI medical assistant.<br/><br/>
@@ -48,7 +50,7 @@ How can I help you today?`;
   useEffect(() => {
     const login = async () => {
       try {
-        const response = await fetch('http://localhost:8000/api/auth/login', {
+        const response = await fetch(`${API_URL}/api/auth/login`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email: 'doctor@mediagent.com', password: 'password123' })
@@ -66,7 +68,7 @@ How can I help you today?`;
 
   const fetchAppointments = async (authToken) => {
     try {
-      const response = await fetch('http://localhost:8000/api/appointments/', {
+      const response = await fetch(`${API_URL}/api/appointments/`, {
         headers: { 'Authorization': `Bearer ${authToken}` }
       });
       const data = await response.json();
@@ -156,7 +158,7 @@ How can I help you today?`;
     setLoading(true);
 
     try {
-      const response = await fetch('http://localhost:8000/api/chat/', {
+      const response = await fetch(`${API_URL}/api/chat/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({ message: input, session_id: 'web_' + Date.now() })
@@ -186,7 +188,7 @@ How can I help you today?`;
     setLoading(true);
     
     try {
-      const response = await fetch('http://localhost:8000/api/chat/', {
+      const response = await fetch(`${API_URL}/api/chat/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({ message: `Show me ${patientName}`, session_id: 'direct_select_' + Date.now() })
@@ -238,7 +240,7 @@ How can I help you today?`;
     }
 
     try {
-      const response = await fetch('http://localhost:8000/api/patients/', {
+      const response = await fetch(`${API_URL}/api/patients/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({
@@ -278,7 +280,7 @@ How can I help you today?`;
     }
 
     try {
-      const response = await fetch('http://localhost:8000/api/prescriptions/', {
+      const response = await fetch(`${API_URL}/api/prescriptions/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({
@@ -316,7 +318,7 @@ Assessment: ${soapNote.assessment}
 Plan: ${soapNote.plan}`;
     
     try {
-      const response = await fetch('http://localhost:8000/api/chat/', {
+      const response = await fetch(`${API_URL}/api/chat/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({ 
@@ -656,3 +658,4 @@ Plan: ${soapNote.plan}`;
 }
 
 export default App;
+
