@@ -66,6 +66,40 @@ How can I help you today?`;
     login();
   }, []);
 
+  // Cache for patient names and their MRNs
+const [patientCache, setPatientCache] = useState({});
+const [allPatientNames, setAllPatientNames] = useState([]);
+
+// Fetch all patient names on load
+useEffect(() => {
+  const fetchAllPatients = async () => {
+    if (!token) return;
+    try {
+      const response = await fetch(`${API_URL}/api/patients/`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        const nameMap = {};
+        const names = [];
+        data.patients?.forEach(p => {
+          nameMap[p.name] = p.mrn || p.id;
+          names.push(p.name);
+        });
+        setPatientCache(nameMap);
+        setAllPatientNames(names);
+        console.log(`📋 Loaded ${names.length} patient names into cache`);
+      }
+    } catch (error) {
+      console.error('Failed to fetch patient names:', error);
+    }
+  };
+  
+  if (token) {
+    fetchAllPatients();
+  }
+}, [token]);
+
   const fetchAppointments = async (authToken) => {
     try {
       const response = await fetch(`${API_URL}/api/appointments/`, {
@@ -114,32 +148,62 @@ How can I help you today?`;
 ✅ Tools are now active for ${patient.name}`;
   };
 
+  
   const formatMessage = (text) => {
-    if (!text) return '';
+  if (!text) return '';
+  
+  let formatted = text;
+  
+  // Convert newlines to <br/>
+  formatted = formatted.replace(/\n/g, '<br/>');
+  
+  // Convert **bold** to <strong>
+  formatted = formatted.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+  
+  // 🔥 NEW: Find all patient names from the message
+  // Pattern matches: "Patient Selected: NAME" or "✅ Patient Selected: NAME"
+  const patientNameMatches = text.matchAll(/(?:Patient Selected:|✅ Patient Selected:)\s*([^\n<]+)/g);
+  const patientNames = [];
+  
+  for (const match of patientNameMatches) {
+    const name = match[1].trim();
+    // Only add if not already in the list
+    if (!patientNames.includes(name) && name.length > 0) {
+      patientNames.push(name);
+    }
+  }
+  
+  // Also look for "Found X patients: • NAME" patterns
+  const listMatches = text.matchAll(/•\s*([^\n(]+?)(?:\s*\(|$)/g);
+  for (const match of listMatches) {
+    const name = match[1].trim();
+    if (!patientNames.includes(name) && name.length > 0) {
+      patientNames.push(name);
+    }
+  }
+  
+  // For each patient name found, make it clickable
+  patientNames.forEach(name => {
+    // Skip if name is empty or too short
+    if (name.length < 2) return;
     
-    let formatted = text;
+    // Escape special characters for regex
+    const escapedName = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const regex = new RegExp(`(?<![<"'])\\b${escapedName}\\b(?![^<]*<\/)`, 'g');
     
-    formatted = formatted.replace(/\n/g, '<br/>');
-    formatted = formatted.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-    
-    const patientNames = [
-      'Sarah Johnson', 'Michael Chen', 'Emily Rodriguez', 
-      'James Williams', 'Maria Garcia', 'Robert', 'John Smith'
-    ];
-    
-    patientNames.forEach(name => {
-      const regex = new RegExp(`(${name})`, 'g');
-      formatted = formatted.replace(regex, (match) => {
-        return `<span class="patient-name-link" onclick="window.directSelectPatient('${match}')">${match}</span>`;
-      });
+    formatted = formatted.replace(regex, (match) => {
+      return `<span class="patient-name-link" onclick="window.directSelectPatient('${match.replace(/'/g, "\\'")}')">${match}</span>`;
     });
-    
-    formatted = formatted.replace(/robert/g, (match) => {
-      return `<span class="patient-name-link" onclick="window.directSelectPatient('Robert')">Robert</span>`;
-    });
-    
-    return formatted;
-  };
+  });
+  
+  return formatted;
+};
+
+
+
+
+
+
 
   const handleAnalysisComplete = (analysis) => {
     if (analysis.formatted_response) {
@@ -182,43 +246,123 @@ How can I help you today?`;
     setLoading(false);
   }, [input, token]);
 
+
+
   const handleDirectPatientSelect = useCallback(async (patientName) => {
-    if (!token) return;
+  if (!token) {
+    console.error('❌ No token - please login first');
+    return;
+  }
+  
+  // Check if patient exists in cache
+  if (allPatientNames.length > 0 && !allPatientNames.includes(patientName)) {
+    console.warn(`⚠️ Patient "${patientName}" not found in cache`);
+    // Still try to find them - maybe it's a partial match
+    const matchedName = allPatientNames.find(name => 
+      name.toLowerCase().includes(patientName.toLowerCase()) ||
+      patientName.toLowerCase().includes(name.toLowerCase())
+    );
     
-    setLoading(true);
-    
-    try {
-      const response = await fetch(`${API_URL}/api/chat/`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify({ message: `Show me ${patientName}`, session_id: 'direct_select_' + Date.now() })
-      });
-      const data = await response.json();
-      
-      if (data.patient) {
-        setCurrentPatient(data.patient);
-        const formattedMessage = formatMessage(data.reply);
-        
-        const systemMessage = { 
-          id: Date.now().toString(), 
-          text: formattedMessage, 
-          isUser: false, 
-          timestamp: new Date() 
-        };
-        setMessages(prev => [...prev, systemMessage]);
-        scrollToBottom();
-      } else {
-        const errorMessage = formatMessage(`❌ Patient "${patientName}" not found. Please check the name.`);
-        setMessages(prev => [...prev, { id: Date.now().toString(), text: errorMessage, isUser: false, timestamp: new Date() }]);
-      }
-    } catch (error) {
-      console.error('Failed to select patient:', error);
-      const errorMessage = formatMessage(`❌ Error selecting patient. Please try again.`);
-      setMessages(prev => [...prev, { id: Date.now().toString(), text: errorMessage, isUser: false, timestamp: new Date() }]);
-    } finally {
-      setLoading(false);
+    if (matchedName) {
+      patientName = matchedName;
+      console.log(`🔄 Using closest match: "${matchedName}"`);
     }
-  }, [token]);
+  }
+  
+  setLoading(true);
+  
+  try {
+    // Always search by name to get latest patient data
+    const response = await fetch(`${API_URL}/api/chat/`, {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json', 
+        'Authorization': `Bearer ${token}` 
+      },
+      body: JSON.stringify({ 
+        message: `Show me ${patientName}`, 
+        session_id: 'direct_select_' + Date.now() 
+      })
+    });
+    
+    const data = await response.json();
+    
+    if (data.patient) {
+      setCurrentPatient(data.patient);
+      // Update cache with latest patient data
+      setPatientCache(prev => ({
+        ...prev,
+        [data.patient.name]: data.patient.mrn || data.patient.id
+      }));
+      // Add to allPatientNames if not already there
+      if (!allPatientNames.includes(data.patient.name)) {
+        setAllPatientNames(prev => [...prev, data.patient.name]);
+      }
+      
+      const formattedMessage = formatMessage(data.reply);
+      setMessages(prev => [...prev, { 
+        id: Date.now().toString(), 
+        text: formattedMessage, 
+        isUser: false, 
+        timestamp: new Date() 
+      }]);
+      scrollToBottom();
+    } else {
+      // Patient not found - show helpful message
+      const similarPatients = allPatientNames
+        .filter(name => name.toLowerCase().includes(patientName.toLowerCase()))
+        .slice(0, 5);
+      
+      let errorMsg = `❌ Patient "${patientName}" not found.`;
+      if (similarPatients.length > 0) {
+        errorMsg += ` Did you mean: ${similarPatients.join(', ')}?`;
+      }
+      const errorMessage = formatMessage(errorMsg);
+      setMessages(prev => [...prev, { 
+        id: Date.now().toString(), 
+        text: errorMessage, 
+        isUser: false, 
+        timestamp: new Date() 
+      }]);
+    }
+  } catch (error) {
+    console.error('❌ Failed to select patient:', error);
+    const errorMessage = formatMessage(`❌ Error selecting patient. Please try again or search manually.`);
+    setMessages(prev => [...prev, { 
+      id: Date.now().toString(), 
+      text: errorMessage, 
+      isUser: false, 
+      timestamp: new Date() 
+    }]);
+  } finally {
+    setLoading(false);
+  }
+}, [token, allPatientNames]);
+
+const handlePatientClick = (patientName) => {
+  if (!patientName || patientName.trim() === '') return;
+  
+  // Check if it's a real patient name
+  const exactMatch = allPatientNames.find(name => 
+    name.toLowerCase() === patientName.toLowerCase()
+  );
+  
+  if (exactMatch) {
+    handleDirectPatientSelect(exactMatch);
+  } else {
+    // Try fuzzy match
+    const fuzzyMatch = allPatientNames.find(name => 
+      name.toLowerCase().includes(patientName.toLowerCase()) ||
+      patientName.toLowerCase().includes(name.toLowerCase())
+    );
+    if (fuzzyMatch) {
+      handleDirectPatientSelect(fuzzyMatch);
+    } else {
+      // Just search by the name
+      handleDirectPatientSelect(patientName);
+    }
+  }
+};
 
   useEffect(() => {
     window.directSelectPatient = (name) => {
