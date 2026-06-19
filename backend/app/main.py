@@ -16,15 +16,7 @@ app = FastAPI(title=settings.APP_NAME, debug=settings.DEBUG)
 # Configure CORS - Allow Vercel frontend and local development
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "https://mediagent-eta.vercel.app",
-        "https://mediagent-imu56pqz8-mediagent1.vercel.app",  # Add this new URL
-        "https://mediagent-git-main-mediagent1.vercel.app",
-        "https://mediagent-4sf26hsh7-mediagent1.vercel.app",
-        "http://localhost:3000",
-        "http://localhost:8000",
-        "https://mediagent-pn7o.onrender.com"
-    ],
+    allow_origins=["*"],  # Allow ALL origins
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
