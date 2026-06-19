@@ -171,6 +171,8 @@ class AgentOrchestrator:
 
         2. "search_patient" - ONLY if doctor wants ONE specific patient
            Examples: "show Sarah Johnson", "find Michael", "sarah"
+           ⚠️ IMPORTANT: If action is "search_patient", you MUST extract the patient name.
+           Return: {{"action": "search_patient", "params": {{"patient_name": "Sarah Johnson"}}}}
 
         3. "get_all_patients" - ONLY if doctor wants to see ALL patients (no filters)
            Examples: "show all patients", "list patients", "all my patients"
@@ -195,6 +197,7 @@ class AgentOrchestrator:
         - If the message contains "how to", "how do i", "help me", "what is", "explain" → ALWAYS use "general"
         - If the message asks about patients without SOAP notes/prescriptions/appointments → ALWAYS use "general"
         - Only use "search_patient" if it's ONE specific name
+        - When action is "search_patient", ALWAYS include "patient_name" in params
 
         Return ONLY JSON: {{"action": "action_name", "params": {{...}}}}
         """
@@ -304,6 +307,32 @@ class AgentOrchestrator:
         
         return None
     
+    def _extract_patient_name_from_message(self, message: str) -> str:
+        """Extract patient name from message using regex patterns"""
+        # Try to find "Show me X" pattern
+        patterns = [
+            r'(?:Show me|Search for|Find|get|select)\s+([A-Za-z\s]+)',
+            r'patient\s+([A-Za-z\s]+)',
+            r'^(?:show|find|get)\s+([A-Za-z\s]+)',
+        ]
+        
+        for pattern in patterns:
+            match = re.search(pattern, message, re.IGNORECASE)
+            if match:
+                name = match.group(1).strip()
+                # Remove common stop words if they appear at the end
+                name = re.sub(r'\s+(?:please|now|thanks|thank you)$', '', name, flags=re.IGNORECASE)
+                if name and len(name) > 1:
+                    return name
+        
+        # If no pattern matches, check if the message itself is just a name
+        message_clean = message.strip()
+        # Check if it's a simple name (only letters and spaces, 2-30 characters)
+        if re.match(r'^[A-Za-z\s]{2,30}$', message_clean):
+            return message_clean
+        
+        return ""
+    
     def process_message(self, user_message: str, image_base64: str = None) -> Dict[str, Any]:
         self.conversation_history.append({"role": "user", "content": user_message})
         
@@ -327,7 +356,20 @@ class AgentOrchestrator:
         patient_data = None
         
         if intent["action"] == "search_patient":
-            name = intent.get("patient_name", "")
+            # Try to get patient name from intent params first
+            name = intent.get("params", {}).get("patient_name", "")
+            
+            # If not found, try to extract from the message
+            if not name:
+                name = self._extract_patient_name_from_message(user_message)
+                print(f"🔍 Extracted patient name from message: {name}")
+            
+            # If still empty, use the entire message (might be just a name)
+            if not name:
+                name = user_message.strip()
+                print(f"🔍 Using entire message as patient name: {name}")
+            
+            print(f"🔍 Searching for patient: {name}")
             result = search_patient(name, self.db)
             
             if result.get("found"):
@@ -400,7 +442,7 @@ class AgentOrchestrator:
                 response_text = "❌ Please select a patient first. Type 'Show me [patient name]'"
         
         elif intent["action"] == "schedule_appointment":
-            patient_name = intent.get("patient_name")
+            patient_name = intent.get("params", {}).get("patient_name")
             if not patient_name and self.current_patient_name:
                 patient_name = self.current_patient_name
             
@@ -409,8 +451,8 @@ class AgentOrchestrator:
             else:
                 result = schedule_appointment(
                     patient_name,
-                    intent.get("weeks_from_now", 0),
-                    intent.get("time", "09:00 AM"),
+                    intent.get("params", {}).get("weeks_from_now", 0),
+                    intent.get("params", {}).get("time", "09:00 AM"),
                     user_message,
                     self.db,
                     self.doctor_id
@@ -418,7 +460,7 @@ class AgentOrchestrator:
                 response_text = result.get("message", "Appointment scheduled" if result.get("success") else "Failed to schedule")
                 
         elif intent["action"] == "get_appointments":
-            result = get_appointments(intent.get("patient_name"), self.db, self.doctor_id)
+            result = get_appointments(intent.get("params", {}).get("patient_name"), self.db, self.doctor_id)
             if result["appointments"]:
                 apt_list = []
                 for a in result["appointments"]:
@@ -444,7 +486,7 @@ class AgentOrchestrator:
         
         elif intent["action"] == "generate_prescription":
             if self.current_patient_id:
-                medication = intent.get("medication", "Unknown")
+                medication = intent.get("params", {}).get("medication", "Unknown")
                 
                 result = generate_prescription(
                     patient_id=self.current_patient_id,
@@ -467,7 +509,7 @@ class AgentOrchestrator:
                 response_text = "❌ Please select a patient first. Type: 'Show me patient [name]'"
         
         elif intent["action"] == "get_prescriptions":
-            patient_name = intent.get("patient_name")
+            patient_name = intent.get("params", {}).get("patient_name")
             target_patient_id = self.current_patient_id
             
             if patient_name:
