@@ -1461,3 +1461,111 @@ p, .message-text, .patient-detail, .vital-row, .appointment-item, .soap-field la
     font-size: 10px;
   }
 }
+
+/* ============================================================
+   MOBILE BOTTOM NAVIGATION
+   ============================================================ */
+
+.mobile-nav {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: white;
+  border-top: 1px solid #eef2ff;
+  padding: 8px 0 env(safe-area-inset-bottom, 8px) 0;
+  z-index: 200;
+  box-shadow: 0 -4px 20px rgba(0,0,0,0.08);
+  justify-content: space-around;
+  align-items: center;
+}
+
+.mobile-nav-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  background: none;
+  border: none;
+  padding: 6px 16px;
+  cursor: pointer;
+  border-radius: 12px;
+  transition: all 0.2s;
+  flex: 1;
+  max-width: 80px;
+}
+
+.mobile-nav-btn .mobile-nav-icon {
+  font-size: 22px;
+  line-height: 1;
+}
+
+.mobile-nav-btn .mobile-nav-label {
+  font-size: 10px;
+  font-weight: 500;
+  color: #94a3b8;
+  transition: color 0.2s;
+}
+
+.mobile-nav-btn.active .mobile-nav-label {
+  color: #1a73e8;
+}
+
+.mobile-nav-btn.active {
+  background: #f0f7ff;
+}
+
+/* Mobile visibility classes */
+.mobile-visible {
+  display: flex !important;
+}
+
+.mobile-hidden {
+  display: none !important;
+}
+
+/* ============================================================
+   MOBILE RESPONSIVE - SHOW BOTTOM NAV
+   ============================================================ */
+
+@media (max-width: 820px) {
+  .mobile-nav {
+    display: flex !important;
+  }
+
+  .main-container {
+    padding-bottom: 70px !important;
+  }
+
+  .panel {
+    border-radius: 16px !important;
+  }
+
+  .panel-patient.mobile-visible,
+  .panel-chat.mobile-visible,
+  .panel-tools.mobile-visible {
+    display: flex !important;
+  }
+
+  .panel-patient.mobile-hidden,
+  .panel-chat.mobile-hidden,
+  .panel-tools.mobile-hidden {
+    display: none !important;
+  }
+
+  /* Make panels fill the screen on mobile */
+  .panel-patient,
+  .panel-chat,
+  .panel-tools {
+    width: 100% !important;
+    height: calc(100vh - 120px) !important;
+    max-height: calc(100vh - 120px) !important;
+    flex: 1 !important;
+  }
+
+  .panel-chat {
+    height: calc(100vh - 120px) !important;
+    max-height: calc(100vh - 120px) !important;
+  }
+}
