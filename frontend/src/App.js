@@ -43,15 +43,19 @@ How can I help you today?`;
   });
   const [token, setToken] = useState(null);
   const [showAnalysis, setShowAnalysis] = useState(false);
+  
+  // 🔥 MOBILE NAVIGATION STATE - Chat is default
+  const [mobileTab, setMobileTab] = useState('chat');
+  
   const messagesEndRef = useRef(null);
 
-  // 🔥 NEW: Cache for patient names
+  // 🔥 Cache for patient names
   const [patientCache, setPatientCache] = useState({});
   const [allPatientNames, setAllPatientNames] = useState([]);
 
   const hasPatientSelected = currentPatient !== null;
 
-  // 🔥 NEW: Debug hook to expose state to console
+  // 🔥 Debug hook to expose state to console
   useEffect(() => {
     window.__debug = {
       currentPatient,
@@ -86,7 +90,7 @@ How can I help you today?`;
     login();
   }, []);
 
-  // 🔥 NEW: Fetch all patient names on load
+  // 🔥 Fetch all patient names on load
   useEffect(() => {
     const fetchAllPatients = async () => {
       if (!token) return;
@@ -167,7 +171,7 @@ How can I help you today?`;
 ✅ Tools are now active for ${patient.name}`;
   };
 
-  // 🔥 UPDATED: Enhanced formatMessage with better debugging
+  // 🔥 Enhanced formatMessage with better debugging
   const formatMessage = (text) => {
     if (!text) return '';
     
@@ -268,7 +272,7 @@ How can I help you today?`;
     setLoading(false);
   }, [input, token, allPatientNames]);
 
-  // 🔥 UPDATED: handleDirectPatientSelect with better logging
+  // 🔥 handleDirectPatientSelect with better logging
   const handleDirectPatientSelect = useCallback(async (patientName) => {
     console.log('🔍 Selecting patient:', patientName);
     
@@ -569,8 +573,34 @@ Plan: ${soapNote.plan}`;
         </div>
       </header>
 
+      {/* 🔥 MOBILE TOP NAVIGATION - 3 BUTTONS UNDER HEADER */}
+      <div className="mobile-top-nav">
+        <button 
+          className={`mobile-top-btn ${mobileTab === 'patients' ? 'active' : ''}`}
+          onClick={() => setMobileTab('patients')}
+        >
+          <span className="mobile-top-icon">👤</span>
+          <span>Patients</span>
+        </button>
+        <button 
+          className={`mobile-top-btn ${mobileTab === 'chat' ? 'active' : ''}`}
+          onClick={() => setMobileTab('chat')}
+        >
+          <span className="mobile-top-icon">💬</span>
+          <span>Chat</span>
+        </button>
+        <button 
+          className={`mobile-top-btn ${mobileTab === 'tools' ? 'active' : ''}`}
+          onClick={() => setMobileTab('tools')}
+        >
+          <span className="mobile-top-icon">🛠️</span>
+          <span>Tools</span>
+        </button>
+      </div>
+
       <div className="main-container">
-        <div className="panel panel-patient">
+        {/* Patient Panel */}
+        <div className={`panel panel-patient ${mobileTab === 'patients' ? 'mobile-visible' : 'mobile-hidden'}`}>
           <div className="panel-header">📋 Patient Context</div>
           
           <div className="search-box">
@@ -654,7 +684,8 @@ Plan: ${soapNote.plan}`;
           </div>
         </div>
 
-        <div className="panel panel-chat">
+        {/* Chat Panel - DEFAULT VIEW */}
+        <div className={`panel panel-chat ${mobileTab === 'chat' ? 'mobile-visible' : 'mobile-hidden'}`}>
           <div className="panel-header">💬 Conversation</div>
           <div className="chat-messages">
             {messages.map((msg) => (
@@ -690,7 +721,8 @@ Plan: ${soapNote.plan}`;
           </div>
         </div>
 
-        <div className="panel panel-tools">
+        {/* Tools Panel */}
+        <div className={`panel panel-tools ${mobileTab === 'tools' ? 'mobile-visible' : 'mobile-hidden'}`}>
           <div className="panel-tabs">
             <button 
               className={`tab ${activeTab === 'soap' ? 'active' : ''} ${!hasPatientSelected ? 'disabled' : ''}`}
