@@ -17,11 +17,13 @@ app = FastAPI(title=settings.APP_NAME, debug=settings.DEBUG)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "https://mediagent-eta.vercel.app",   # Your Vercel frontend
-        "http://localhost:3000",              # Local React dev
-        "http://localhost:5173",              # Local Vite dev
-        "http://127.0.0.1:3000",              # Local alternative
-        "https://mediagent-pn7o.onrender.com" # Your backend itself
+        "https://mediagent-eta.vercel.app",
+        "https://mediagent-imu56pqz8-mediagent1.vercel.app",  # Add this new URL
+        "https://mediagent-git-main-mediagent1.vercel.app",
+        "https://mediagent-4sf26hsh7-mediagent1.vercel.app",
+        "http://localhost:3000",
+        "http://localhost:8000",
+        "https://mediagent-pn7o.onrender.com"
     ],
     allow_credentials=True,
     allow_methods=["*"],
