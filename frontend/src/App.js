@@ -600,7 +600,7 @@ Plan: ${soapNote.plan}`;
 
       <div className="main-container">
         {/* Patient Panel */}
-        <div className={`panel panel-patient ${mobileTab === 'patients' ? 'mobile-visible' : 'mobile-hidden'}`}>
+        <div className="panel panel-patient">
           <div className="panel-header">📋 Patient Context</div>
           
           <div className="search-box">
@@ -685,7 +685,7 @@ Plan: ${soapNote.plan}`;
         </div>
 
         {/* Chat Panel - DEFAULT VIEW */}
-        <div className={`panel panel-chat ${mobileTab === 'chat' ? 'mobile-visible' : 'mobile-hidden'}`}>
+        <div className="panel panel-chat">
           <div className="panel-header">💬 Conversation</div>
           <div className="chat-messages">
             {messages.map((msg) => (
@@ -722,7 +722,7 @@ Plan: ${soapNote.plan}`;
         </div>
 
         {/* Tools Panel */}
-        <div className={`panel panel-tools ${mobileTab === 'tools' ? 'mobile-visible' : 'mobile-hidden'}`}>
+        <div className="panel panel-tools">
           <div className="panel-tabs">
             <button 
               className={`tab ${activeTab === 'soap' ? 'active' : ''} ${!hasPatientSelected ? 'disabled' : ''}`}
