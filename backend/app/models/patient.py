@@ -1,8 +1,10 @@
 from sqlalchemy import Column, String, Integer, Date, DateTime, ARRAY, JSON
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
+from sqlalchemy.orm import relationship  
 import uuid
 from ..db.database import Base
+from ..models.image import Image
 
 class Patient(Base):
     __tablename__ = "patients"
@@ -18,5 +20,8 @@ class Patient(Base):
     allergies = Column(ARRAY(String), default=[])
     conditions = Column(ARRAY(String), default=[])
     medications = Column(ARRAY(String), default=[])
-    analysis_history = Column(JSON, default=[])  # NEW: Store X-ray/analysis results
+    analysis_history = Column(JSON, default=[])
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+    
+    # Relationship with Image model
+    images = relationship("Image", back_populates="patient", cascade="all, delete-orphan")

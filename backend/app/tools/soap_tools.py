@@ -6,8 +6,9 @@ import uuid
 from datetime import datetime
 
 def extract_soap_content_from_message(message: str) -> dict:
-    """Extract SOAP note content from the message that contains the form data"""
+    """Extract SOAP note content from the message"""
     
+    # Default SOAP structure
     content = {
         "subjective": {
             "chief_complaint": "",
@@ -70,6 +71,16 @@ def extract_soap_content_from_message(message: str) -> dict:
     if plan_match:
         content["plan"]["follow_up"] = plan_match.group(1).strip()[:500]
     
+    # If no structured content found, create from patient context
+    if not content["subjective"]["chief_complaint"]:
+        content["subjective"]["chief_complaint"] = "Patient evaluation"
+    
+    if not content["assessment"]["diagnosis"]:
+        content["assessment"]["diagnosis"] = "Under evaluation"
+    
+    if not content["plan"]["follow_up"]:
+        content["plan"]["follow_up"] = "Schedule follow-up in 2 weeks"
+    
     return content
 
 def generate_soap_note(patient_id: str, doctor_id: str, user_message: str, db: Session) -> dict:
@@ -81,27 +92,31 @@ def generate_soap_note(patient_id: str, doctor_id: str, user_message: str, db: S
         return {"success": False, "message": "No patient selected"}
     
     print(f"=== Generating SOAP note for {patient.name} ===")
-    print(f"User message length: {len(user_message)}")
+    print(f"User message: {user_message[:100]}...")
     
-    # Extract content from the message
-    soap_content = extract_soap_content_from_message(user_message)
+    # Check if message contains structured SOAP data
+    if "Subjective:" in user_message and "Objective:" in user_message:
+        # Message already has structured format, extract directly
+        soap_content = extract_soap_content_from_message(user_message)
+    else:
+        # Create a basic SOAP note from the message
+        soap_content = {
+            "subjective": {
+                "chief_complaint": user_message[:500]
+            },
+            "objective": {
+                "physical_exam": "Not documented",
+                "vitals": {"bp": "", "hr": "", "temp": "", "oxygen": ""}
+            },
+            "assessment": {
+                "diagnosis": "Under evaluation"
+            },
+            "plan": {
+                "follow_up": "Schedule follow-up in 2 weeks"
+            }
+        }
     
-    # If no structured content found, create a basic one from patient data
-    if not soap_content["subjective"]["chief_complaint"]:
-        soap_content["subjective"]["chief_complaint"] = f"Patient {patient.name} evaluated"
-    
-    if not soap_content["assessment"]["diagnosis"]:
-        soap_content["assessment"]["diagnosis"] = patient.conditions[0] if patient.conditions else "Under evaluation"
-    
-    if not soap_content["plan"]["follow_up"]:
-        soap_content["plan"]["follow_up"] = "Schedule follow-up in 2 weeks"
-    
-    # Also check if the message contains the form data directly (from frontend)
-    # The frontend sends: "Generate SOAP note for John Smith with:\nSubjective: ...\nObjective: ..."
-    if 'Subjective:' in user_message and 'Objective:' in user_message:
-        print("Found structured form data in message")
-        # The extraction above already handled it
-    
+    # Create the SOAP note
     soap = SOAPNote(
         id=uuid.uuid4(),
         patient_id=patient_id,
@@ -112,27 +127,28 @@ def generate_soap_note(patient_id: str, doctor_id: str, user_message: str, db: S
     
     db.add(soap)
     db.commit()
+    db.refresh(soap)
     
-    # Format response
+    # Format response with the actual content
     response_text = f"""📝 **SOAP Note Generated for {patient.name}**
 
 **ID:** {soap.id}
 
-**📋 Subjective:**
-{soap_content['subjective']['chief_complaint'][:200]}
+**📋 SUBJECTIVE:**
+{soap_content['subjective']['chief_complaint']}
 
-**🔬 Objective:**
-BP: {soap_content['objective']['vitals']['bp']} | HR: {soap_content['objective']['vitals']['hr']}
-{soap_content['objective']['physical_exam'][:200] if soap_content['objective']['physical_exam'] else 'No physical exam documented'}
+**🔬 OBJECTIVE:**
+{soap_content['objective']['physical_exam'] if soap_content['objective']['physical_exam'] else 'No physical exam documented'}
+Vitals: BP {soap_content['objective']['vitals']['bp'] or 'N/A'} | HR {soap_content['objective']['vitals']['hr'] or 'N/A'}
 
-**🧠 Assessment:**
-{soap_content['assessment']['diagnosis'][:200]}
+**🧠 ASSESSMENT:**
+{soap_content['assessment']['diagnosis']}
 
-**📋 Plan:**
-{soap_content['plan']['follow_up'][:200]}
+**📋 PLAN:**
+{soap_content['plan']['follow_up']}
 
 ---
-✅ SOAP note saved. Click 'Analyze & Get Recommendations' for AI-powered clinical insights."""
+✅ SOAP note saved."""
     
     return {
         "success": True,
@@ -156,14 +172,56 @@ def get_soap_notes(patient_id: str = None, db: Session = None) -> dict:
         SOAPNote.patient_id == patient_id
     ).order_by(SOAPNote.visit_date.desc()).all()
     
+    formatted_notes = []
+    for note in notes:
+        content = note.content if isinstance(note.content, dict) else {}
+        visit_date = note.visit_date
+        if visit_date:
+            if isinstance(visit_date, datetime):
+                date_str = visit_date.strftime("%Y-%m-%d")
+            else:
+                date_str = str(visit_date)[:10]
+        else:
+            date_str = "Unknown"
+        
+        formatted_note = {
+            "id": str(note.id),
+            "visit_date": date_str,
+            "content": content
+        }
+        formatted_notes.append(formatted_note)
+    
     return {
-        "notes": [
-            {
-                "id": str(n.id),
-                "content": n.content,
-                "visit_date": n.visit_date.isoformat(),
-                "status": n.is_finalized
-            } for n in notes
-        ],
+        "notes": formatted_notes,
         "count": len(notes)
+    }
+
+def get_soap_note_by_id(note_id: str, db: Session) -> dict:
+    """Retrieve a single SOAP note by ID"""
+    from uuid import UUID
+    
+    note = db.query(SOAPNote).filter(SOAPNote.id == UUID(note_id)).first()
+    
+    if not note:
+        return {"success": False, "message": "SOAP note not found"}
+    
+    content = note.content if isinstance(note.content, dict) else {}
+    visit_date = note.visit_date
+    if visit_date:
+        if isinstance(visit_date, datetime):
+            date_str = visit_date.strftime("%Y-%m-%d")
+        else:
+            date_str = str(visit_date)[:10]
+    else:
+        date_str = "Unknown"
+    
+    return {
+        "success": True,
+        "soap_note": {
+            "id": str(note.id),
+            "patient_id": str(note.patient_id),
+            "visit_date": date_str,
+            "content": content,
+            "status": note.is_finalized
+        }
     }

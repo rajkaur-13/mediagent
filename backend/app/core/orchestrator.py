@@ -16,6 +16,7 @@ from ..models.patient import Patient
 from ..models.appointment import Appointment
 from ..models.soap_note import SOAPNote
 from ..models.prescription import Prescription
+from ..models.image import Image
 
 class AgentOrchestrator:
     def __init__(self, db: Session, doctor_id: str):
@@ -66,6 +67,7 @@ class AgentOrchestrator:
     
     def _get_meaningful_soap_notes(self, patient_id):
         """Get only SOAP notes with actual clinical content"""
+        from ..models.soap_note import SOAPNote
         notes = self.db.query(SOAPNote).filter(
             SOAPNote.patient_id == patient_id
         ).order_by(SOAPNote.visit_date.desc()).all()
@@ -73,10 +75,15 @@ class AgentOrchestrator:
         meaningful = []
         for note in notes:
             content = note.content if isinstance(note.content, dict) else {}
-            subjective = content.get('subjective', {}).get('chief_complaint', '')
-            # Only keep notes with real content (length > 100 chars and not the default text)
-            if len(subjective) > 100 and 'Patient' not in subjective[:30]:
+            if content:
+                subjective = content.get('subjective', {}).get('chief_complaint', '')
+                if len(subjective) > 10:
+                    meaningful.append(note)
+            elif hasattr(note, 'assessment') and note.assessment:
                 meaningful.append(note)
+        
+        if not meaningful and notes:
+            return notes
         
         return meaningful
     
@@ -87,16 +94,41 @@ class AgentOrchestrator:
     def _format_existing_records(self, patient) -> str:
         sections = []
         
-        # Show the LATEST FULL SOAP note only
         soap_section = "\n📝 **Latest SOAP Note:**\n"
         latest_note = self._get_latest_meaningful_soap_note(self.current_patient_id)
         
         if latest_note:
             content = latest_note.content if isinstance(latest_note.content, dict) else {}
-            subjective = content.get('subjective', {}).get('chief_complaint', 'Not documented')
-            objective = content.get('objective', {}).get('physical_exam', 'Not documented')
-            assessment = content.get('assessment', {}).get('diagnosis', 'Not documented')
-            plan = content.get('plan', {}).get('follow_up', 'Not documented')
+            
+            # ✅ FIX: Extract the actual SOAP content properly
+            subjective = content.get('subjective', {})
+            objective = content.get('objective', {})
+            assessment = content.get('assessment', {})
+            plan = content.get('plan', {})
+            
+            # Extract from nested structure
+            if isinstance(subjective, dict):
+                chief_complaint = subjective.get('chief_complaint', 'Not documented')
+            else:
+                chief_complaint = str(subjective)
+            
+            if isinstance(objective, dict):
+                physical_exam = objective.get('physical_exam', 'Not documented')
+                vitals = objective.get('vitals', {})
+                if vitals:
+                    physical_exam = f"{physical_exam}\nVitals: BP {vitals.get('bp', 'N/A')} | HR {vitals.get('hr', 'N/A')}"
+            else:
+                physical_exam = str(objective)
+            
+            if isinstance(assessment, dict):
+                diagnosis = assessment.get('diagnosis', 'Not documented')
+            else:
+                diagnosis = str(assessment)
+            
+            if isinstance(plan, dict):
+                follow_up = plan.get('follow_up', 'Not documented')
+            else:
+                follow_up = str(plan)
             
             visit_date = latest_note.visit_date
             if visit_date:
@@ -108,10 +140,10 @@ class AgentOrchestrator:
                 date_str = "Unknown"
             
             soap_section += f"📅 **Date:** {date_str}\n\n"
-            soap_section += f"📋 **SUBJECTIVE:**\n{subjective}\n\n"
-            soap_section += f"🔬 **OBJECTIVE:**\n{objective}\n\n"
-            soap_section += f"🧠 **ASSESSMENT:**\n{assessment}\n\n"
-            soap_section += f"📋 **PLAN:**\n{plan}\n\n"
+            soap_section += f"📋 **SUBJECTIVE:**\n{chief_complaint}\n\n"
+            soap_section += f"🔬 **OBJECTIVE:**\n{physical_exam}\n\n"
+            soap_section += f"🧠 **ASSESSMENT:**\n{diagnosis}\n\n"
+            soap_section += f"📋 **PLAN:**\n{follow_up}\n\n"
         else:
             soap_section += "• No SOAP notes yet. Type 'Generate SOAP note' to create one.\n"
         sections.append(soap_section)
@@ -168,6 +200,30 @@ class AgentOrchestrator:
            - "what is hypertension"
            - "hello"
            - "help me with SOAP notes"
+           - "show me patients with diabetes"
+           - "show me patients with hypertension and diabetes"
+           - "find patients with asthma"
+           - "search for patients with high blood pressure"
+           - "patients with multiple conditions"
+           - "show me patients with similar symptoms"
+           - "find similar patients for Sarah Johnson"
+           - "what patients are like Michael"
+           - "show me patients in same age group"
+           - "show me patients above 50 with diabetes"
+           - "show me female patients with hypertension"
+           - "show me patients between 40 and 60"
+           - "show me patients with chest pain"
+           - "show me patients with fatigue"
+           - "search for patients with symptoms of heart disease"
+           - "show me patients with no SOAP notes"
+           - "show me patients without appointments"
+           - "show me patients without prescriptions"
+           - "show me patients without imaging"
+           - "show me patients without X-rays"
+           - "show me patients without CT scans"
+           - "show me patients without MRIs"
+           - "show me patients without ECGs"
+           - "show me patients without retinal scans"
 
         2. "search_patient" - ONLY if doctor wants ONE specific patient
            Examples: "show Sarah Johnson", "find Michael", "sarah"
@@ -192,12 +248,32 @@ class AgentOrchestrator:
         8. "generate_prescription" - Creating a prescription
            Examples: "write prescription", "prescribe amoxicillin"
 
+        9. "search_images" - Searching for images by type
+           Examples: 
+           - "show me chest X-rays for Sarah Johnson"
+           - "show me CT scans for patients"
+           - "show me MRI for Michael"
+           - "show me ECG results"
+           - "show me retinal scans"
+           - "show me all imaging for Sarah"
+           - "show me abnormal imaging findings"
+           - "show me normal X-rays"
+           - "show me imaging from last week"
+           - "show me patients with imaging"
+           - "show me patients without imaging"
+           - "show me brain CT scans"
+           - "show me chest X-rays"
+           ⚠️ IMPORTANT: Extract image_type (X-Ray, CT Scan, MRI, ECG, Retinal Scan) and patient_name if present
+
         IMPORTANT RULES:
         - If the message asks about MULTIPLE patients (contains "patients", "who", "which", "all without") → ALWAYS use "general"
         - If the message contains "how to", "how do i", "help me", "what is", "explain" → ALWAYS use "general"
         - If the message asks about patients without SOAP notes/prescriptions/appointments → ALWAYS use "general"
+        - If the message asks about patients with specific conditions → ALWAYS use "general"
+        - If the message asks about imaging (X-Ray, CT, MRI, ECG, Retinal) → use "search_images"
         - Only use "search_patient" if it's ONE specific name
         - When action is "search_patient", ALWAYS include "patient_name" in params
+        - When action is "search_images", include "image_type" and "patient_name" if present
 
         Return ONLY JSON: {{"action": "action_name", "params": {{...}}}}
         """
@@ -280,9 +356,170 @@ class AgentOrchestrator:
         result += "\n💡 Type 'Schedule appointment for [patient name]' to book one."
         return result
     
+    def _find_patients_without_imaging(self, image_type: str = None) -> str:
+        """Find all patients who don't have imaging (or specific type)"""
+        all_patients = self.db.query(Patient).all()
+        
+        patients_without_imaging = []
+        for patient in all_patients:
+            query = self.db.query(Image).filter(Image.patient_id == patient.id)
+            if image_type:
+                query = query.filter(Image.image_type == image_type)
+            images = query.all()
+            if not images:
+                patients_without_imaging.append(patient)
+        
+        if not patients_without_imaging:
+            type_label = f"{image_type} " if image_type else ""
+            return f"✅ All patients have {type_label}imaging!"
+        
+        type_label = f"{image_type} " if image_type else ""
+        result = f"📋 Found {len(patients_without_imaging)} patients without {type_label}imaging:\n\n"
+        for patient in patients_without_imaging:
+            result += f"• {patient.name} (MRN: {patient.mrn}, Age: {patient.age})\n"
+        
+        result += f"\n💡 Type 'Upload {image_type or 'an image'} for [patient name]' to add one."
+        return result
+    
+    def _search_patients_by_condition(self, condition: str) -> str:
+        """Find patients with a specific condition"""
+        patients = self.db.query(Patient).filter(
+            Patient.conditions.contains([condition])
+        ).all()
+        
+        if not patients:
+            return f"❌ No patients found with condition '{condition}'"
+        
+        result = f"📋 Found {len(patients)} patients with {condition}:\n\n"
+        for patient in patients:
+            result += f"• {patient.name} (MRN: {patient.mrn}, Age: {patient.age})\n"
+        
+        result += f"\n💡 Type 'Show me [patient name]' to view their full profile."
+        return result
+    
+    def _search_images_by_type(self, image_type: str, patient_name: str = None) -> str:
+        """Search for images by type, optionally for a specific patient"""
+        query = self.db.query(Image)
+        
+        if image_type:
+            query = query.filter(Image.image_type.ilike(f"%{image_type}%"))
+        
+        if patient_name:
+            patients = self.db.query(Patient).filter(Patient.name.ilike(f"%{patient_name}%")).all()
+            if patients:
+                patient_ids = [p.id for p in patients]
+                query = query.filter(Image.patient_id.in_(patient_ids))
+        
+        images = query.order_by(Image.uploaded_at.desc()).all()
+        
+        if not images:
+            patient_text = f" for {patient_name}" if patient_name else ""
+            return f"❌ No {image_type or 'images'} found{patient_text}."
+        
+        result = f"📋 Found {len(images)} {image_type or 'image'}(s):\n\n"
+        for img in images:
+            patient = self.db.query(Patient).filter(Patient.id == img.patient_id).first()
+            result += f"• {img.image_type} for {patient.name if patient else 'Unknown'}\n"
+            result += f"  📅 {img.uploaded_at.strftime('%Y-%m-%d') if img.uploaded_at else 'Unknown date'}\n"
+            result += f"  🔍 Findings: {img.analysis[:100] if img.analysis else 'No analysis'}\n"
+            if img.confidence:
+                result += f"  📊 Confidence: {img.confidence:.2%}\n"
+            result += "\n"
+        
+        result += f"💡 Type 'Show me [patient name]' to view their full profile."
+        return result
+    
+    def _search_combined(self, condition: str = None, medication: str = None, 
+                         age_min: int = None, age_max: int = None, 
+                         gender: str = None, has_soap: bool = None,
+                         has_appointment: bool = None, has_prescription: bool = None,
+                         has_imaging: bool = None, image_type: str = None) -> str:
+        """Combined search with multiple filters"""
+        
+        query = self.db.query(Patient)
+        
+        if condition:
+            query = query.filter(Patient.conditions.contains([condition]))
+        
+        if medication:
+            query = query.filter(Patient.medications.contains([medication]))
+        
+        if age_min:
+            query = query.filter(Patient.age >= age_min)
+        
+        if age_max:
+            query = query.filter(Patient.age <= age_max)
+        
+        if gender:
+            query = query.filter(Patient.gender == gender)
+        
+        patients = query.all()
+        
+        # Apply additional filters manually
+        filtered_patients = []
+        for patient in patients:
+            # Filter by SOAP status
+            if has_soap is not None:
+                soap_notes = self.db.query(SOAPNote).filter(SOAPNote.patient_id == patient.id).all()
+                if has_soap and not soap_notes:
+                    continue
+                if not has_soap and soap_notes:
+                    continue
+            
+            # Filter by appointment status
+            if has_appointment is not None:
+                today = datetime.now().date()
+                appointments = self.db.query(Appointment).filter(
+                    Appointment.patient_id == patient.id,
+                    Appointment.date >= today,
+                    Appointment.status == "scheduled"
+                ).all()
+                if has_appointment and not appointments:
+                    continue
+                if not has_appointment and appointments:
+                    continue
+            
+            # Filter by prescription status
+            if has_prescription is not None:
+                prescriptions = self.db.query(Prescription).filter(
+                    Prescription.patient_id == patient.id,
+                    Prescription.status == "active"
+                ).all()
+                if has_prescription and not prescriptions:
+                    continue
+                if not has_prescription and prescriptions:
+                    continue
+            
+            # Filter by imaging status
+            if has_imaging is not None or image_type:
+                img_query = self.db.query(Image).filter(Image.patient_id == patient.id)
+                if image_type:
+                    img_query = img_query.filter(Image.image_type.ilike(f"%{image_type}%"))
+                images = img_query.all()
+                if has_imaging and not images:
+                    continue
+                if not has_imaging and images:
+                    continue
+            
+            filtered_patients.append(patient)
+        
+        if not filtered_patients:
+            return "❌ No patients match the specified criteria."
+        
+        result = f"📋 Found {len(filtered_patients)} patients matching your criteria:\n\n"
+        for patient in filtered_patients:
+            result += f"• {patient.name} (MRN: {patient.mrn}, Age: {patient.age})\n"
+        
+        result += f"\n💡 Type 'Show me [patient name]' to view their full profile."
+        return result
+    
     def _handle_complex_query(self, message: str) -> Optional[str]:
         """Handle complex queries that require database checks"""
         message_lower = message.lower().strip()
+        
+        # ✅ IMPORTANT: Skip if this is a SOAP generation request
+        if "generate soap" in message_lower or "create soap" in message_lower or "soap note for" in message_lower:
+            return None
         
         # Check for "without SOAP note" type queries
         if "soap note" in message_lower and ("without" in message_lower or "no" in message_lower or "haven't" in message_lower or "hasn't" in message_lower or "not created" in message_lower or "missing" in message_lower):
@@ -296,6 +533,23 @@ class AgentOrchestrator:
         if "appointment" in message_lower and ("without" in message_lower or "no" in message_lower or "need follow-up" in message_lower or "missing" in message_lower):
             return self._find_patients_without_appointments()
         
+        # Check for "without imaging" type queries
+        if "imaging" in message_lower or "image" in message_lower:
+            if "without" in message_lower or "no" in message_lower:
+                # Check for specific image type
+                image_types = ["x-ray", "ct scan", "mri", "ecg", "retinal"]
+                for img_type in image_types:
+                    if img_type in message_lower:
+                        return self._find_patients_without_imaging(img_type.title())
+                return self._find_patients_without_imaging()
+        
+        # Check for "with condition" type queries
+        if "with" in message_lower and any(cond in message_lower for cond in ["diabetes", "hypertension", "asthma", "high cholesterol", "heart disease", "cancer", "copd", "arthritis"]):
+            conditions = ["diabetes", "hypertension", "asthma", "high cholesterol", "heart disease", "cancer", "copd", "arthritis"]
+            for condition in conditions:
+                if condition in message_lower:
+                    return self._search_patients_by_condition(condition.title())
+        
         # Check for "patients with no" type queries
         if "patients" in message_lower and "no" in message_lower:
             if "soap" in message_lower or "note" in message_lower:
@@ -304,12 +558,17 @@ class AgentOrchestrator:
                 return self._find_patients_without_prescriptions()
             if "appointment" in message_lower:
                 return self._find_patients_without_appointments()
+            if "imaging" in message_lower or "image" in message_lower or "x-ray" in message_lower or "ct" in message_lower:
+                image_types = ["x-ray", "ct scan", "mri", "ecg", "retinal"]
+                for img_type in image_types:
+                    if img_type in message_lower:
+                        return self._find_patients_without_imaging(img_type.title())
+                return self._find_patients_without_imaging()
         
         return None
     
     def _extract_patient_name_from_message(self, message: str) -> str:
         """Extract patient name from message using regex patterns"""
-        # Try to find "Show me X" pattern
         patterns = [
             r'(?:Show me|Search for|Find|get|select)\s+([A-Za-z\s]+)',
             r'patient\s+([A-Za-z\s]+)',
@@ -320,18 +579,36 @@ class AgentOrchestrator:
             match = re.search(pattern, message, re.IGNORECASE)
             if match:
                 name = match.group(1).strip()
-                # Remove common stop words if they appear at the end
                 name = re.sub(r'\s+(?:please|now|thanks|thank you)$', '', name, flags=re.IGNORECASE)
                 if name and len(name) > 1:
                     return name
         
-        # If no pattern matches, check if the message itself is just a name
         message_clean = message.strip()
-        # Check if it's a simple name (only letters and spaces, 2-30 characters)
         if re.match(r'^[A-Za-z\s]{2,30}$', message_clean):
             return message_clean
         
         return ""
+    
+    def _extract_image_type_from_message(self, message: str) -> str:
+        """Extract image type from message"""
+        message_lower = message.lower()
+        image_types = {
+            "x-ray": "X-Ray",
+            "xray": "X-Ray",
+            "ct scan": "CT Scan",
+            "ct": "CT Scan",
+            "mri": "MRI",
+            "ecg": "ECG",
+            "retinal": "Retinal Scan",
+            "retina": "Retinal Scan",
+            "imaging": "All"
+        }
+        
+        for key, value in image_types.items():
+            if key in message_lower:
+                return value
+        
+        return None
     
     def process_message(self, user_message: str, image_base64: str = None) -> Dict[str, Any]:
         self.conversation_history.append({"role": "user", "content": user_message})
@@ -356,15 +633,12 @@ class AgentOrchestrator:
         patient_data = None
         
         if intent["action"] == "search_patient":
-            # Try to get patient name from intent params first
             name = intent.get("params", {}).get("patient_name", "")
             
-            # If not found, try to extract from the message
             if not name:
                 name = self._extract_patient_name_from_message(user_message)
                 print(f"🔍 Extracted patient name from message: {name}")
             
-            # If still empty, use the entire message (might be just a name)
             if not name:
                 name = user_message.strip()
                 print(f"🔍 Using entire message as patient name: {name}")
@@ -416,6 +690,18 @@ class AgentOrchestrator:
                 response_text = self._format_patient_list(result["patients"])
             else:
                 response_text = "No patients found in your clinic"
+        
+        elif intent["action"] == "search_images":
+            image_type = intent.get("params", {}).get("image_type")
+            patient_name = intent.get("params", {}).get("patient_name")
+            
+            if not image_type:
+                image_type = self._extract_image_type_from_message(user_message)
+            
+            if image_type == "All":
+                image_type = None
+            
+            response_text = self._search_images_by_type(image_type, patient_name)
         
         elif intent["action"] == "get_soap_notes_status":
             if self.current_patient_id:

@@ -44,18 +44,15 @@ How can I help you today?`;
   const [token, setToken] = useState(null);
   const [showAnalysis, setShowAnalysis] = useState(false);
   
-  // 🔥 MOBILE NAVIGATION STATE - Chat is default
   const [mobileTab, setMobileTab] = useState('chat');
   
   const messagesEndRef = useRef(null);
 
-  // 🔥 Cache for patient names
   const [patientCache, setPatientCache] = useState({});
   const [allPatientNames, setAllPatientNames] = useState([]);
 
   const hasPatientSelected = currentPatient !== null;
 
-  // 🔥 Debug hook to expose state to console
   useEffect(() => {
     window.__debug = {
       currentPatient,
@@ -70,7 +67,6 @@ How can I help you today?`;
     console.log('📋 All patient names:', allPatientNames);
   }, [currentPatient, allPatientNames, token, patientCache]);
 
-  // Login useEffect
   useEffect(() => {
     const login = async () => {
       try {
@@ -90,7 +86,6 @@ How can I help you today?`;
     login();
   }, []);
 
-  // 🔥 Fetch all patient names on load
   useEffect(() => {
     const fetchAllPatients = async () => {
       if (!token) return;
@@ -171,19 +166,14 @@ How can I help you today?`;
 ✅ Tools are now active for ${patient.name}`;
   };
 
-  // 🔥 Enhanced formatMessage with better debugging
   const formatMessage = (text) => {
     if (!text) return '';
     
     let formatted = text;
     
-    // Convert newlines to <br/>
     formatted = formatted.replace(/\n/g, '<br/>');
-    
-    // Convert **bold** to <strong>
     formatted = formatted.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
     
-    // Find all patient names from the message
     const patientNameMatches = text.matchAll(/(?:Patient Selected:|✅ Patient Selected:)\s*([^\n<]+)/g);
     const patientNames = [];
     
@@ -195,7 +185,6 @@ How can I help you today?`;
       }
     }
     
-    // Also look for "Found X patients: • NAME" patterns
     const listMatches = text.matchAll(/•\s*([^\n(]+?)(?:\s*\(|$)/g);
     for (const match of listMatches) {
       const name = match[1].trim();
@@ -205,7 +194,6 @@ How can I help you today?`;
       }
     }
     
-    // For each patient name found, make it clickable
     patientNames.forEach(name => {
       if (name.length < 2) return;
       
@@ -249,7 +237,6 @@ How can I help you today?`;
       if (data.patient) {
         console.log('✅ Setting current patient to:', data.patient.name);
         setCurrentPatient(data.patient);
-        // Update cache
         setPatientCache(prev => ({
           ...prev,
           [data.patient.name]: data.patient.mrn || data.patient.id
@@ -272,7 +259,6 @@ How can I help you today?`;
     setLoading(false);
   }, [input, token, allPatientNames]);
 
-  // 🔥 handleDirectPatientSelect with better logging
   const handleDirectPatientSelect = useCallback(async (patientName) => {
     console.log('🔍 Selecting patient:', patientName);
     
@@ -281,7 +267,6 @@ How can I help you today?`;
       return;
     }
     
-    // Check if patient exists in cache
     if (allPatientNames.length > 0 && !allPatientNames.includes(patientName)) {
       console.warn(`⚠️ Patient "${patientName}" not found in cache`);
       const matchedName = allPatientNames.find(name => 
@@ -430,7 +415,6 @@ How can I help you today?`;
         alert(`Patient ${newPatient.name} added successfully!`);
         setShowAddPatient(false);
         setNewPatient({ name: '', age: '', gender: 'Male', phone: '', email: '', conditions: '', allergies: '' });
-        // Refresh patient list
         const fetchResponse = await fetch(`${API_URL}/api/patients/`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
@@ -486,13 +470,19 @@ How can I help you today?`;
     }
   };
 
+  // ✅ FIXED: Using the WORKING chat endpoint with NO duplicate messages
   const handleSaveSoapNote = async () => {
     if (!currentPatient) {
       alert('Please select a patient first');
       return;
     }
     
-    const soapContent = `Generate SOAP note for ${currentPatient.name} with:
+    if (!soapNote.subjective.trim() || !soapNote.objective.trim() || !soapNote.assessment.trim() || !soapNote.plan.trim()) {
+      alert('Please fill in all SOAP note fields');
+      return;
+    }
+    
+    const soapMessage = `Generate SOAP note for ${currentPatient.name} with:
 Subjective: ${soapNote.subjective}
 Objective: ${soapNote.objective}
 Assessment: ${soapNote.assessment}
@@ -502,23 +492,51 @@ Plan: ${soapNote.plan}`;
       const response = await fetch(`${API_URL}/api/chat/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify({ 
-          message: soapContent,
-          session_id: 'web_' + Date.now()
-        })
+        body: JSON.stringify({ message: soapMessage, session_id: 'web_' + Date.now() })
       });
       
       const data = await response.json();
-      const formattedMessage = formatMessage(data.reply);
-      setMessages(prev => [...prev, { id: (Date.now()+1).toString(), text: formattedMessage, isUser: false, timestamp: new Date() }]);
+      console.log('📥 Response:', data);
       
-      const idMatch = data.reply.match(/ID: ([a-f0-9-]+)/i);
-      if (idMatch) {
-        setCurrentSoapNoteId(idMatch[1]);
+      if (data.reply) {
+        // ✅ Show ONLY ONE message - the SOAP note result
+        const formattedMessage = formatMessage(data.reply);
+        setMessages(prev => [...prev, { 
+          id: (Date.now()+1).toString(), 
+          text: formattedMessage, 
+          isUser: false, 
+          timestamp: new Date() 
+        }]);
+        
+        // ✅ Clear the form
+        setSoapNote({ subjective: '', objective: '', assessment: '', plan: '' });
+        
+        alert(`✅ SOAP note saved for ${currentPatient.name}!`);
+        
+        // ✅ Update the patient data WITHOUT adding a new message
+        const refreshResponse = await fetch(`${API_URL}/api/chat/`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+          body: JSON.stringify({ 
+            message: `Show me ${currentPatient.name}`, 
+            session_id: 'silent_refresh_' + Date.now() 
+          })
+        });
+        const refreshData = await refreshResponse.json();
+        if (refreshData.patient) {
+          // ✅ Update patient state silently (no new message)
+          setCurrentPatient(refreshData.patient);
+          // ✅ Update patient cache silently
+          setPatientCache(prev => ({
+            ...prev,
+            [refreshData.patient.name]: refreshData.patient.mrn || refreshData.patient.id
+          }));
+        }
+      } else {
+        alert('Error: No response from server');
       }
-      
-      alert(`SOAP note saved for ${currentPatient.name}!`);
     } catch (error) {
+      console.error('❌ Error:', error);
       alert('Error saving SOAP note: ' + error.message);
     }
   };
@@ -573,7 +591,6 @@ Plan: ${soapNote.plan}`;
         </div>
       </header>
 
-      {/* 🔥 MOBILE TOP NAVIGATION - 3 BUTTONS UNDER HEADER */}
       <div className="mobile-top-nav">
         <button 
           className={`mobile-top-btn ${mobileTab === 'patients' ? 'active' : ''}`}
@@ -599,7 +616,6 @@ Plan: ${soapNote.plan}`;
       </div>
 
       <div className="main-container">
-        {/* Patient Panel */}
         <div className="panel panel-patient">
           <div className="panel-header">📋 Patient Context</div>
           
@@ -684,7 +700,6 @@ Plan: ${soapNote.plan}`;
           </div>
         </div>
 
-        {/* Chat Panel - DEFAULT VIEW */}
         <div className="panel panel-chat">
           <div className="panel-header">💬 Conversation</div>
           <div className="chat-messages">
@@ -721,7 +736,6 @@ Plan: ${soapNote.plan}`;
           </div>
         </div>
 
-        {/* Tools Panel */}
         <div className="panel panel-tools">
           <div className="panel-tabs">
             <button 

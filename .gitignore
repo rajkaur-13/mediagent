@@ -19,3 +19,7 @@ chroma_db/
 
 # OS
 .DS_Store
+frontend/node_modules/.cache/
+frontend/node_modules/
+backend/venv/
+frontend/.cache/
