@@ -187,5 +187,280 @@ The Orchestrator uses **LangGraph** to create a multi-agent system that handles 
 └───────────────────────────────────────────────────────────────────────────────────────────────────┘
 
 
+---
 
+## 🗄️ Database Schema
+
+```sql
+-- Patients (Core Entity)
+CREATE TABLE patients (
+    id UUID PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    mrn VARCHAR(50) UNIQUE NOT NULL,
+    age INTEGER,
+    gender VARCHAR(10),
+    phone VARCHAR(20),
+    email VARCHAR(255),
+    allergies TEXT[],
+    conditions TEXT[],
+    medications TEXT[],
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- SOAP Notes (Clinical Documentation)
+CREATE TABLE soap_notes (
+    id UUID PRIMARY KEY,
+    patient_id UUID REFERENCES patients(id),
+    doctor_id UUID REFERENCES users(id),
+    subjective TEXT,
+    objective TEXT,
+    assessment TEXT,
+    plan TEXT,
+    visit_date TIMESTAMP DEFAULT NOW()
+);
+
+-- Appointments (Scheduling)
+CREATE TABLE appointments (
+    id UUID PRIMARY KEY,
+    patient_id UUID REFERENCES patients(id),
+    doctor_id UUID REFERENCES users(id),
+    date DATE NOT NULL,
+    time TIME NOT NULL,
+    reason TEXT,
+    status VARCHAR(20) DEFAULT 'scheduled',
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Prescriptions (Medication Orders)
+CREATE TABLE prescriptions (
+    id UUID PRIMARY KEY,
+    patient_id UUID REFERENCES patients(id),
+    doctor_id UUID REFERENCES users(id),
+    medication VARCHAR(255),
+    dosage VARCHAR(50),
+    frequency VARCHAR(50),
+    duration VARCHAR(50),
+    instructions TEXT,
+    status VARCHAR(20) DEFAULT 'active',
+    prescribed_date TIMESTAMP DEFAULT NOW()
+);
+
+-- Images (Medical Imaging)
+CREATE TABLE images (
+    id UUID PRIMARY KEY,
+    patient_id UUID REFERENCES patients(id),
+    image_type VARCHAR(50),  -- X-Ray, CT, MRI, ECG, Retinal
+    filename VARCHAR(255),
+    analysis TEXT,
+    confidence FLOAT,
+    uploaded_at TIMESTAMP DEFAULT NOW()
+);
+🚀 Features
+🤖 Chat Interface
+Natural language understanding
+
+Agentic AI orchestration with LangGraph
+
+Multi-turn conversations with context
+
+Intent detection and tool routing
+
+Clickable patient names in chat
+
+🔍 Patient Management
+Search by name, MRN, or condition
+
+Fuzzy name matching for typos
+
+Vector search with ChromaDB
+
+Complete medical history: allergies, conditions, medications
+
+Add new patients
+
+📝 SOAP Notes
+Generate via chat or form
+
+AI-powered analysis and recommendations
+
+Clinical decision support
+
+Risk detection and alerts
+
+Structured storage with JSONB
+
+View latest and historical notes
+
+Find patients without SOAP notes
+
+💊 Prescriptions
+Generate medication orders
+
+View active prescriptions
+
+Find patients without prescriptions
+
+Prescription history tracking
+
+📅 Appointments
+Schedule via chat or form
+
+Relative dates (today, tomorrow, next week)
+
+View upcoming appointments
+
+Find patients without appointments
+
+🩻 Medical Imaging
+5 image types: X-Ray, CT, MRI, ECG, Retinal
+
+AI-powered analysis with HuggingFace
+
+Confidence scoring
+
+Upload and view images
+
+Find patients without imaging
+
+📊 Clinical Decision Support
+SOAP note analysis
+
+Treatment recommendations
+
+Risk assessment
+
+Drug interaction checking
+
+Follow-up planning
+
+Severity analysis
+
+🛠️ Tech Stack
+Layer	Technology	Purpose
+Frontend	React 18, TypeScript	UI components, state management
+Backend	FastAPI, Python 3.11	REST APIs, business logic
+Database	PostgreSQL (Neon)	ACID-compliant data storage
+Vector DB	ChromaDB	Semantic search, embeddings
+Cache	Redis (Upstash)	Session management, rate limiting
+LLM	Groq (Llama 3.3 70B)	Intent detection, responses
+Vision	HuggingFace (ResNet-50)	Image analysis
+Agent Framework	LangGraph	Multi-agent orchestration
+Auth	JWT	Authentication and authorization
+Deployment	Vercel (frontend), Render (backend)	Cloud hosting
+📋 Supported Prompt Types
+Category	Command	Example
+Patient	Show me [name]	"Show me Sarah Johnson"
+All Patients	Show all patients	"Show all patients"
+By Condition	Show me patients with [condition]	"Show me patients with diabetes"
+By Medication	Show me patients on [medication]	"Show me patients on Metformin"
+SOAP	Generate SOAP note for [name]	"Generate SOAP note for Sarah"
+Appointment	Schedule appointment for [name]	"Schedule appointment for Sarah next week"
+Prescription	Write prescription for [name]	"Write prescription for Sarah"
+Imaging	Show me X-rays for [name]	"Show me X-rays for Sarah"
+Without	Show me patients without [item]	"Show me patients without SOAP notes"
+Search	Search for [term]	"Search for hypertension"
+Similar	Find similar patients to [name]	"Find similar patients to Sarah"
+
+🔄 CI/CD Pipeline
+
+Push to GitHub
+      │
+      ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                         GitHub Actions                                      │
+│                                                                             │
+│  1. Run Tests (pytest)                                                      │
+│  2. Run Linting (flake8, black)                                             │
+│  3. Build Application                                                       │
+│  4. Deploy Backend to Render                                                │
+│  5. Deploy Frontend to Vercel                                               │
+│  6. Run Health Checks                                                       │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+📁 Project Structure
+
+mediagent-v2/
+├── backend/
+│   ├── app/
+│   │   ├── api/                    # API endpoints
+│   │   │   ├── routes/
+│   │   │   │   ├── chat.py         # Main chat endpoint
+│   │   │   │   ├── patients.py     # Patient CRUD
+│   │   │   │   ├── appointments.py # Appointment CRUD
+│   │   │   │   ├── soap.py         # SOAP note CRUD
+│   │   │   │   ├── prescriptions.py# Prescription CRUD
+│   │   │   │   ├── xray.py         # X-Ray analysis
+│   │   │   │   ├── auth.py         # Authentication
+│   │   │   │   └── images.py       # Image upload/analysis
+│   │   │   └── dependencies/
+│   │   │       ├── auth.py         # JWT validation
+│   │   │       └── db.py           # Database session
+│   │   ├── core/
+│   │   │   ├── orchestrator.py     # Agent orchestration
+│   │   │   ├── prompts.py          # LLM prompts
+│   │   │   └── security.py         # JWT, password hashing
+│   │   ├── tools/
+│   │   │   ├── patient_tools.py    # Patient operations
+│   │   │   ├── soap_tools.py       # SOAP note operations
+│   │   │   ├── appointment_tools.py# Appointment operations
+│   │   │   ├── prescription_tools.py# Prescription operations
+│   │   │   ├── xray_tools.py       # X-Ray analysis
+│   │   │   └── vision_tools.py     # Vision model integration
+│   │   ├── models/
+│   │   │   ├── patient.py          # Patient model
+│   │   │   ├── soap_note.py        # SOAP note model
+│   │   │   ├── appointment.py      # Appointment model
+│   │   │   ├── prescription.py     # Prescription model
+│   │   │   ├── image.py            # Image model
+│   │   │   └── user.py             # User model
+│   │   ├── services/
+│   │   │   ├── llm_service.py      # Groq LLM integration
+│   │   │   ├── vision_service.py   # HuggingFace integration
+│   │   │   ├── chroma_service.py   # Vector search
+│   │   │   └── redis_service.py    # Caching
+│   │   └── db/
+│   │       └── database.py         # Database connection
+│   ├── requirements.txt
+│   ├── .env.example
+│   └── render.yaml
+│
+├── frontend/
+│   ├── src/
+│   │   ├── App.js                  # Main React component
+│   │   ├── components/
+│   │   │   ├── XRayAnalyzer.js     # Image upload/analysis
+│   │   │   ├── AnalyzeButton.js    # Patient analysis
+│   │   │   └── ...                 # Other components
+│   │   ├── App.css                 # Styling
+│   │   └── index.js                # Entry point
+│   ├── package.json
+│   └── vercel.json
+│
+├── .github/
+│   └── workflows/
+│       └── deploy.yml              # CI/CD pipeline
+│
+├── docker-compose.yml
+├── README.md
+└── render.yaml
+
+
+🏁 Quick Start
+
+Backend Setup
+
+cd backend
+conda create -n mediagent python=3.11
+conda activate mediagent
+pip install -r requirements.txt
+cp .env.example .env
+# Fill in your API keys
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+
+Frontend Setup
+
+cd frontend
+npm install
+npm start
 
