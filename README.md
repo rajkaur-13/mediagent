@@ -673,7 +673,7 @@ Create a `.env` file in the backend directory:
 
 ```env
 # Database
-DATABASE_URL=postgresql://user:pass@localhost:5432/mediagent
+DATABASE_URL=postgresql://[username]:[password]@[host]:[port]/[database_name]
 
 # LLM
 GROQ_API_KEY=your_groq_api_key
@@ -682,7 +682,7 @@ GROQ_API_KEY=your_groq_api_key
 PINECONE_API_KEY=your_pinecone_api_key
 
 # Cache
-REDIS_URL=redis://localhost:6379
+REDIS_URL=redis://[username]:[password]@[host]:[port]
 
 # Auth
 JWT_SECRET_KEY=your_jwt_secret_key
