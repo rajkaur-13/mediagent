@@ -1,4 +1,3 @@
-```markdown
 # 🏥 MediAgent V2 — Production AI Medical Assistant
 
 [![Live Demo](https://img.shields.io/badge/Live_Demo-mediagent--eta.vercel.app-1a73e8?style=for-the-badge&logo=vercel)](https://mediagent-eta.vercel.app)
