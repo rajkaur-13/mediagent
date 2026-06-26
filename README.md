@@ -432,6 +432,9 @@ CREATE TABLE images (
     confidence FLOAT,
     uploaded_at TIMESTAMP DEFAULT NOW()
 );
+
+---
+
 🚀 Features
 🤖 Chat Interface
 Natural language understanding
