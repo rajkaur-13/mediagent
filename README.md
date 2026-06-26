@@ -433,7 +433,8 @@ CREATE TABLE images (
 );
 
 
-# 🚀 Features
+---
+##🚀 Features
 
 ## 🤖 Chat Interface
 - Natural language understanding
