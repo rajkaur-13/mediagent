@@ -21,6 +21,7 @@ Doctors spend **15+ hours per week** switching between multiple systems—EHR, s
 | Complex scheduling | Double-booking, missed appointments | One-command appointment booking |
 
 ---
+## 📊 System Architecture
 ┌─────────────────────────────────────────────────────────────────────────────────────────────────────┐
 │ │
 │ USER (Doctor) │
@@ -187,4 +188,4 @@ The Orchestrator uses **LangGraph** to create a multi-agent system that handles 
 
 
 
-## 📊 System Architecture
+
