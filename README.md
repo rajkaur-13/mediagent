@@ -245,106 +245,125 @@ graph TB
 ---
 
 ## 🔄 Data Flow: How a Request is Processed
-User: "Show me patients with diabetes"
-│
-▼
-┌───────────────────────────────────────────────────────────────────────────────────────────────────┐
-│ 1. FRONTEND — React App │
-│ • Captures user input │
-│ • Sends POST /api/chat to backend │
-└───────────────────────────────────────────────────────────────────────────────────────────────────┘
-│
-▼
-└───────────────────────────────────────────────────────────────────────────────────────────────────┘
-│ 2. BACKEND — FastAPI │
-│ • Receives request via /api/chat endpoint │
-│ • Validates JWT token │
-│ • Passes to Orchestrator │
-└───────────────────────────────────────────────────────────────────────────────────────────────────┘
-│
-▼
-└───────────────────────────────────────────────────────────────────────────────────────────────────┘
-│ 3. ORCHESTRATOR — Intent Detection │
-│ • LLM (Groq Llama 3.3) analyzes message │
-│ • Detects intent: "search_patient" │
-│ • Extracts: condition = "diabetes" │
-└───────────────────────────────────────────────────────────────────────────────────────────────────┘
-│
-▼
-└───────────────────────────────────────────────────────────────────────────────────────────────────┘
-│ 4. TOOL EXECUTION — Patient Tools │
-│ • Searches ChromaDB for patients with "diabetes" │
-│ • Returns: Sarah Johnson, Michael Chen │
-│ • Fetches patient records from PostgreSQL │
-└───────────────────────────────────────────────────────────────────────────────────────────────────┘
-│
-▼
-└───────────────────────────────────────────────────────────────────────────────────────────────────┘
-│ 5. RESPONSE GENERATION │
-│ • Orchestrator formats response │
-│ • Makes patient names clickable │
-│ • Returns JSON to frontend │
-└───────────────────────────────────────────────────────────────────────────────────────────────────┘
-│
-▼
-└───────────────────────────────────────────────────────────────────────────────────────────────────┘
-│ 6. FRONTEND — Display │
-│ • Shows message in chat │
-│ • Renders clickable patient names │
-│ • Click → selects patient │
-└───────────────────────────────────────────────────────────────────────────────────────────────────┘
 
-text
+```mermaid
+sequenceDiagram
+    participant D as Doctor
+    participant F as Frontend React
+    participant G as API Gateway
+    participant O as Orchestrator
+    participant L as LLM Groq
+    participant T as Tools
+    participant DB as Database
+    participant V as Vision API
+    participant C as Cache
 
+    D->>F: "Show me patients with diabetes"
+    F->>G: POST /api/chat
+    G->>G: Validate JWT
+    G->>G: Check Rate Limit
+    G->>O: process_message()
+    O->>L: Detect intent
+    L-->>O: action: search_by_condition
+    O->>C: Check cache
+    C-->>O: Cache miss
+    O->>T: search_by_condition("diabetes")
+    T->>DB: Query patients
+    DB-->>T: Sarah Johnson, Michael Chen
+    T->>C: Cache results
+    T-->>O: Patient list
+    O->>O: Format response
+    O->>G: JSON response
+    G->>F: 200 OK
+    F->>D: Display clickable names
+
+    D->>F: Click "Sarah Johnson"
+    F->>G: POST /api/chat
+    G->>O: process_message()
+    O->>L: Detect intent
+    L-->>O: action: search_patient
+    O->>T: search_patient("Sarah Johnson")
+    T->>DB: Get patient records
+    DB-->>T: Patient + SOAP + RX + Appointments
+    T-->>O: Complete patient data
+    O->>O: Format patient context
+    O->>G: JSON response
+    G->>F: 200 OK
+    F->>D: Display patient in sidebar
+
+    D->>F: "Generate SOAP note for Sarah"
+    F->>G: POST /api/chat
+    G->>O: process_message()
+    O->>L: Detect intent
+    L-->>O: action: generate_soap
+    O->>T: generate_soap("Sarah")
+    T->>T: Extract SOAP content
+    T->>T: Analyze for recommendations
+    T->>DB: Insert SOAP note
+    DB-->>T: SOAP created
+    T-->>O: Success + Recommendations
+    O->>O: Format response
+    O->>G: JSON response
+    G->>F: 200 OK
+    F->>D: Display SOAP note saved
+
+    D->>F: "Upload X-ray"
+    F->>G: POST /api/xray/analyze
+    G->>O: analyze_xray(image)
+    O->>T: analyze_xray(image)
+    T->>V: Analyze image
+    V-->>T: finding Normal, confidence 0.94
+    T->>DB: Save image analysis
+    DB-->>T: Image saved
+    T-->>O: Analysis result
+    O->>O: Format result
+    O->>G: JSON response
+    G->>F: 200 OK
+    F->>D: Display analysis
+```
 ---
 
 ## 🧠 Agent Orchestrator: The Brain
 
-The Orchestrator uses **LangGraph** to create a multi-agent system that handles different types of requests:
-┌───────────────────────────────────────────────────────────────────────────────────────────────────┐
-│ USER MESSAGE │
-│ "Schedule appointment for Sarah next week" │
-└───────────────────────────────────────────────────────────────────────────────────────────────────┘
-│
-▼
-┌───────────────────────────────────────────────────────────────────────────────────────────────────┐
-│ LLM INTENT DETECTION │
-│ Groq Llama 3.3 analyzes the message │
-│ Returns: {"action": "schedule_appointment"} │
-└───────────────────────────────────────────────────────────────────────────────────────────────────┘
-│
-▼
-┌───────────────────────────────────────────────────────────────────────────────────────────────────┐
-│ ┌─────────────────────────────────────────────┐ │
-│ │ TOOL ROUTER │ │
-│ └─────────────────────────────────────────────┘ │
-│ │ │
-│ ┌───────────────────────────┼───────────────────────────┐ │
-│ │ │ │ │
-│ ▼ ▼ ▼ │
-│ ┌───────────────────┐ ┌───────────────────┐ ┌───────────────────┐ │
-│ │ Patient Tools │ │ SOAP Tools │ │ Appointment Tools │ │
-│ ├───────────────────┤ ├───────────────────┤ ├───────────────────┤ │
-│ │ search_patient │ │ generate_soap │ │ schedule_appt │ │
-│ │ get_all_patients │ │ get_soap_notes │ │ get_appointments │ │
-│ │ search_by_cond │ │ get_soap_by_id │ │ get_slots │ │
-│ └───────────────────┘ └───────────────────┘ └───────────────────┘ │
-│ │ │ │ │
-│ ├───────────────────────────┼───────────────────────────┤ │
-│ │ │ │ │
-│ ▼ ▼ ▼ │
-│ ┌───────────────────┐ ┌───────────────────┐ ┌───────────────────┐ │
-│ │ Prescription Tools │ │ X-Ray Tools │ │ Complex Query │ │
-│ ├───────────────────┤ ├───────────────────┤ ├───────────────────┤ │
-│ │ generate_rx │ │ analyze_xray │ │ without SOAP │ │
-│ │ get_rx │ │ analyze_ct │ │ without RX │ │
-│ │ get_rx_by_patient │ │ analyze_mri │ │ without appt │ │
-│ │ │ │ analyze_ecg │ │ with condition │ │
-│ │ │ │ analyze_retinal │ │ similar patients │ │
-│ └───────────────────┘ └───────────────────┘ └───────────────────┘ │
-└───────────────────────────────────────────────────────────────────────────────────────────────────┘
+```mermaid
+graph TD
+    subgraph Orchestrator["Orchestrator"]
+        A[User Input] --> B[Preprocessing]
+        B --> C[Context Manager]
+        C --> D[Intent Classifier]
+        D --> E[LLM Decision Engine]
+        
+        E -->|search_patient| F[Patient Tool Executor]
+        E -->|generate_soap| G[SOAP Tool Executor]
+        E -->|schedule_appointment| H[Appointment Tool Executor]
+        E -->|generate_prescription| I[Prescription Tool Executor]
+        E -->|analyze_image| J[Image Tool Executor]
+        E -->|complex_query| K[Complex Query Handler]
+        E -->|general| L[General Chat Handler]
+        
+        F --> M[Result Aggregator]
+        G --> M
+        H --> M
+        I --> M
+        J --> M
+        K --> M
+        L --> M
+        
+        M --> N[Response Formatter]
+        N --> O[Output Generator]
+        
+        subgraph Memory["Memory"]
+            P[Conversation History]
+            Q[Patient Context]
+            R[Session State]
+        end
+        
+        C --> P
+        C --> Q
+        C --> R
+    end
 
-
+```
 ---
 
 ## 🗄️ Database Schema
