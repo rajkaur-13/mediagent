@@ -22,67 +22,256 @@ Doctors spend **15+ hours per week** switching between multiple systems—EHR, s
 
 ---
 ## 📊 System Architecture
-┌─────────────────────────────────────────────────────────────────────────────────────────────────────┐
-│ │
-│ USER (Doctor) │
-│ │ │
-│ ▼ │
-│ ┌─────────────────────────────────────────────────────────────────────────────────────────────┐ │
-│ │ FRONTEND (Vercel) │ │
-│ │ │ │
-│ │ ┌──────────────┐ ┌──────────────┐ ┌──────────────┐ ┌──────────────┐ ┌──────────────┐ │ │
-│ │ │ 💬 Chat │ │ 📋 Patient │ │ 🛠️ Tools │ │ 📱 Mobile │ │ 🔐 Auth │ │ │
-│ │ │ Interface │ │ Context │ │ Panel │ │ Navigation │ │ (JWT) │ │ │
-│ │ └──────────────┘ └──────────────┘ └──────────────┘ └──────────────┘ └──────────────┘ │ │
-│ │ │ │
-│ └─────────────────────────────────────┬───────────────────────────────────────────────────────┘ │
-│ │ HTTPS/REST │
-│ ▼ │
-│ ┌─────────────────────────────────────────────────────────────────────────────────────────────┐ │
-│ │ BACKEND (Render) │ │
-│ │ │ │
-│ │ ┌───────────────────────────────────────────────────────────────────────────────────────┐ │ │
-│ │ │ API GATEWAY │ │ │
-│ │ │ (Authentication + Rate Limiting) │ │ │
-│ │ └───────────────────────────────────────────────────────────────────────────────────────┘ │ │
-│ │ │ │ │
-│ │ ▼ │ │
-│ │ ┌───────────────────────────────────────────────────────────────────────────────────────┐ │ │
-│ │ │ AGENT ORCHESTRATOR │ │ │
-│ │ │ │ │ │
-│ │ │ User Message → Intent Detection → Tool Selection → Tool Execution → Response │ │ │
-│ │ │ │ │ │
-│ │ └───────────────────────────────────────────────────────────────────────────────────────┘ │ │
-│ │ │ │ │
-│ │ ┌─────────────────────┼─────────────────────┐ │ │
-│ │ │ │ │ │ │
-│ │ ▼ ▼ ▼ │ │
-│ │ ┌────────────────────────┐ ┌────────────────────────┐ ┌────────────────────────┐ │ │
-│ │ │ 🛠️ TOOLS │ │ 🧠 SERVICES │ │ 🔌 EXTERNAL │ │ │
-│ │ ├────────────────────────┤ ├────────────────────────┤ ├────────────────────────┤ │ │
-│ │ │ • Patient Tools │ │ • Groq LLM Service │ │ • Groq API (Llama 3.3) │ │ │
-│ │ │ • SOAP Tools │ │ • HuggingFace Service │ │ • HuggingFace Vision │ │ │
-│ │ │ • Appointment Tools │ │ • ChromaDB Service │ │ • Pinecone (Vector DB) │ │ │
-│ │ │ • Prescription Tools │ │ • Redis Service │ │ • Backblaze B2 Storage │ │ │
-│ │ │ • X-Ray Tools │ └────────────────────────┘ └────────────────────────┘ │ │
-│ │ │ • Similar Patients │ │ │
-│ │ │ • Severity Analyzer │ │ │
-│ │ └────────────────────────┘ │ │
-│ │ │ │ │
-│ │ ▼ │ │
-│ │ ┌───────────────────────────────────────────────────────────────────────────────────────┐ │ │
-│ │ │ DATA LAYER │ │ │
-│ │ │ │ │ │
-│ │ │ ┌──────────────┐ ┌──────────────┐ ┌──────────────┐ ┌──────────────┐ │ │ │
-│ │ │ │ PostgreSQL │ │ ChromaDB │ │ Redis │ │ Pinecone │ │ │ │
-│ │ │ │ (Neon) │ │ (Vectors) │ │ (Cache) │ │ (Vectors) │ │ │ │
-│ │ │ └──────────────┘ └──────────────┘ └──────────────┘ └──────────────┘ │ │ │
-│ │ └───────────────────────────────────────────────────────────────────────────────────────┘ │ │
-│ └─────────────────────────────────────────────────────────────────────────────────────────────┘ │
-│ │
-└─────────────────────────────────────────────────────────────────────────────────────────────────────┘
 
-text
+```mermaid
+graph TB
+    subgraph "PRESENTATION LAYER"
+        subgraph "Frontend (Vercel)"
+            A[React SPA]
+            B[Chat Interface]
+            C[Patient Context Panel]
+            D[Tools Panel]
+            E[Mobile Navigation]
+        end
+        F[👤 Doctor / User]
+    end
+
+    subgraph "API GATEWAY LAYER"
+        G[🔐 Authentication<br/>JWT Validation]
+        H[⏱️ Rate Limiting<br/>100 req/min]
+        I[🔄 Request Routing]
+        J[📋 Audit Logging]
+    end
+
+    subgraph "APPLICATION LAYER"
+        subgraph "AGENT ORCHESTRATOR"
+            K[🧠 Intent Detection<br/>Groq Llama 3.3 70B]
+            L[🔄 Tool Router<br/>LangGraph]
+            M[💾 Memory Management<br/>Conversation History]
+            N[📊 Context Management]
+        end
+
+        subgraph "TOOLS LAYER"
+            subgraph "Patient Tools"
+                O1[search_patient]
+                O2[get_all_patients]
+                O3[search_by_condition]
+                O4[fuzzy_name_match]
+            end
+            subgraph "SOAP Tools"
+                P1[generate_soap]
+                P2[get_soap_notes]
+                P3[analyze_soap]
+                P4[get_recommendations]
+            end
+            subgraph "Appointment Tools"
+                Q1[schedule_appointment]
+                Q2[get_appointments]
+                Q3[get_available_slots]
+            end
+            subgraph "Prescription Tools"
+                R1[generate_prescription]
+                R2[get_prescriptions]
+                R3[check_interactions]
+            end
+            subgraph "Imaging Tools"
+                S1[analyze_xray]
+                S2[analyze_ct]
+                S3[analyze_mri]
+                S4[analyze_ecg]
+                S5[analyze_retinal]
+            end
+            subgraph "Analytics Tools"
+                T1[severity_analyzer]
+                T2[similar_patients]
+                T3[without_soap]
+                T4[without_rx]
+                T5[without_appointments]
+            end
+        end
+
+        subgraph "SERVICES LAYER"
+            U[🤖 LLM Service<br/>Groq Llama 3.3]
+            V[👁️ Vision Service<br/>HuggingFace ResNet-50]
+            W[🔍 Vector Service<br/>ChromaDB]
+            X[⚡ Cache Service<br/>Redis (Upstash)]
+            Y[🖼️ Storage Service<br/>B2 Cloud Storage]
+        end
+    end
+
+    subgraph "DATA LAYER"
+        Z[🗄️ PostgreSQL (Neon)<br/>ACID Compliance<br/>3GB Free]
+        AA[📊 ChromaDB<br/>Vector Database<br/>100K Free Vectors]
+        AB[⚡ Redis (Upstash)<br/>Cache + Rate Limiting<br/>10GB Free]
+        AC[🖼️ Object Storage<br/>B2 Cloud Storage<br/>10GB Free]
+    end
+
+    subgraph "EXTERNAL SERVICES"
+        AD[🔗 Groq API<br/>Llama 3.3 70B<br/>2M Context]
+        AE[🔗 HuggingFace API<br/>Vision Models<br/>Rate Limited]
+        AF[🔗 Pinecone<br/>Vector DB<br/>100K Free]
+        AG[🔗 Backblaze B2<br/>Object Storage<br/>10GB Free]
+    end
+
+    subgraph "MONITORING & OPS"
+        AH[📊 Prometheus<br/>Metrics Collection]
+        AI[📈 Grafana<br/>Dashboards]
+        AJ[📋 ELK Stack<br/>Log Aggregation]
+        AK[🔔 Alert Manager<br/>Notifications]
+    end
+
+    subgraph "CI/CD PIPELINE"
+        AL[📤 GitHub Actions]
+        AM[🧪 Run Tests<br/>pytest]
+        AN[🔍 Linting<br/>flake8, black]
+        AO[📦 Build Application]
+        AP[🚀 Deploy Backend<br/>Render]
+        AQ[🚀 Deploy Frontend<br/>Vercel]
+    end
+
+    %% Connections - Frontend to Gateway
+    F --> A
+    A --> G
+    G --> H
+    H --> I
+    I --> J
+    
+    %% Gateway to Application
+    J --> K
+    K --> L
+    L --> M
+    M --> N
+    
+    %% Orchestrator to Tools
+    K --> O1
+    K --> O2
+    K --> O3
+    K --> O4
+    K --> P1
+    K --> P2
+    K --> P3
+    K --> P4
+    K --> Q1
+    K --> Q2
+    K --> Q3
+    K --> R1
+    K --> R2
+    K --> R3
+    K --> S1
+    K --> S2
+    K --> S3
+    K --> S4
+    K --> S5
+    K --> T1
+    K --> T2
+    K --> T3
+    K --> T4
+    K --> T5
+    
+    %% Tools to Services
+    O1 --> W
+    O2 --> W
+    O3 --> W
+    O4 --> W
+    P1 --> X
+    P2 --> X
+    P3 --> X
+    P4 --> X
+    Q1 --> X
+    Q2 --> X
+    Q3 --> X
+    R1 --> X
+    R2 --> X
+    R3 --> X
+    S1 --> V
+    S2 --> V
+    S3 --> V
+    S4 --> V
+    S5 --> V
+    T1 --> U
+    T2 --> W
+    T3 --> U
+    T4 --> U
+    T5 --> U
+    
+    %% Orchestrator to Services
+    K --> U
+    K --> W
+    K --> X
+    K --> Y
+    
+    %% Services to Data Layer
+    U --> AD
+    V --> AE
+    W --> AA
+    W --> AF
+    X --> AB
+    Y --> AC
+    Y --> AG
+    
+    %% Tools to Data Layer
+    O1 --> Z
+    O2 --> Z
+    O3 --> Z
+    O4 --> Z
+    P1 --> Z
+    P2 --> Z
+    P3 --> Z
+    P4 --> Z
+    Q1 --> Z
+    Q2 --> Z
+    Q3 --> Z
+    R1 --> Z
+    R2 --> Z
+    R3 --> Z
+    S1 --> Z
+    S2 --> Z
+    S3 --> Z
+    S4 --> Z
+    S5 --> Z
+    T1 --> Z
+    T2 --> Z
+    T3 --> Z
+    T4 --> Z
+    T5 --> Z
+    
+    %% Monitoring
+    Z --> AH
+    AA --> AH
+    AB --> AH
+    AC --> AH
+    AH --> AI
+    AH --> AJ
+    AH --> AK
+    
+    %% CI/CD
+    AL --> AM
+    AM --> AN
+    AN --> AO
+    AO --> AP
+    AO --> AQ
+    
+    %% Styling
+    classDef frontend fill:#e1f5fe,stroke:#01579b,stroke-width:2px
+    classDef gateway fill:#fff3e0,stroke:#e65100,stroke-width:2px
+    classDef orchestrator fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
+    classDef tools fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px
+    classDef services fill:#fff8e1,stroke:#f57f17,stroke-width:2px
+    classDef data fill:#fce4ec,stroke:#b71c1c,stroke-width:2px
+    classDef external fill:#e0f7fa,stroke:#006064,stroke-width:2px
+    classDef monitoring fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
+    classDef cicd fill:#fff3e0,stroke:#e65100,stroke-width:2px
+    
+    class A,B,C,D,E,F frontend
+    class G,H,I,J gateway
+    class K,L,M,N orchestrator
+    class O1,O2,O3,O4,P1,P2,P3,P4,Q1,Q2,Q3,R1,R2,R3,S1,S2,S3,S4,S5,T1,T2,T3,T4,T5 tools
+    class U,V,W,X,Y services
+    class Z,AA,AB,AC data
+    class AD,AE,AF,AG external
+    class AH,AI,AJ,AK monitoring
+    class AL,AM,AN,AO,AP,AQ cicd
+```
 
 ---
 
