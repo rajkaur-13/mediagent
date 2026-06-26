@@ -25,63 +25,63 @@ Doctors spend **15+ hours per week** switching between multiple systems—EHR, s
 
 ```mermaid
 graph TB
-    subgraph "PRESENTATION LAYER"
-        subgraph "Frontend (Vercel)"
+    subgraph Presentation_Layer["PRESENTATION LAYER"]
+        subgraph Frontend["Frontend (Vercel)"]
             A[React SPA]
             B[Chat Interface]
             C[Patient Context Panel]
             D[Tools Panel]
             E[Mobile Navigation]
         end
-        F[👤 Doctor / User]
+        F[Doctor / User]
     end
 
-    subgraph "API GATEWAY LAYER"
-        G[🔐 Authentication<br/>JWT Validation]
-        H[⏱️ Rate Limiting<br/>100 req/min]
-        I[🔄 Request Routing]
-        J[📋 Audit Logging]
+    subgraph API_Gateway["API GATEWAY LAYER"]
+        G[Authentication JWT]
+        H[Rate Limiting 100 req/min]
+        I[Request Routing]
+        J[Audit Logging]
     end
 
-    subgraph "APPLICATION LAYER"
-        subgraph "AGENT ORCHESTRATOR"
-            K[🧠 Intent Detection<br/>Groq Llama 3.3 70B]
-            L[🔄 Tool Router<br/>LangGraph]
-            M[💾 Memory Management<br/>Conversation History]
-            N[📊 Context Management]
+    subgraph Application_Layer["APPLICATION LAYER"]
+        subgraph Agent_Orchestrator["AGENT ORCHESTRATOR"]
+            K[Intent Detection Groq Llama 3.3]
+            L[Tool Router LangGraph]
+            M[Memory Management]
+            N[Context Management]
         end
 
-        subgraph "TOOLS LAYER"
-            subgraph "Patient Tools"
+        subgraph Tools_Layer["TOOLS LAYER"]
+            subgraph Patient_Tools["Patient Tools"]
                 O1[search_patient]
                 O2[get_all_patients]
                 O3[search_by_condition]
                 O4[fuzzy_name_match]
             end
-            subgraph "SOAP Tools"
+            subgraph SOAP_Tools["SOAP Tools"]
                 P1[generate_soap]
                 P2[get_soap_notes]
                 P3[analyze_soap]
                 P4[get_recommendations]
             end
-            subgraph "Appointment Tools"
+            subgraph Appointment_Tools["Appointment Tools"]
                 Q1[schedule_appointment]
                 Q2[get_appointments]
                 Q3[get_available_slots]
             end
-            subgraph "Prescription Tools"
+            subgraph Prescription_Tools["Prescription Tools"]
                 R1[generate_prescription]
                 R2[get_prescriptions]
                 R3[check_interactions]
             end
-            subgraph "Imaging Tools"
+            subgraph Imaging_Tools["Imaging Tools"]
                 S1[analyze_xray]
                 S2[analyze_ct]
                 S3[analyze_mri]
                 S4[analyze_ecg]
                 S5[analyze_retinal]
             end
-            subgraph "Analytics Tools"
+            subgraph Analytics_Tools["Analytics Tools"]
                 T1[severity_analyzer]
                 T2[similar_patients]
                 T3[without_soap]
@@ -90,59 +90,55 @@ graph TB
             end
         end
 
-        subgraph "SERVICES LAYER"
-            U[🤖 LLM Service<br/>Groq Llama 3.3]
-            V[👁️ Vision Service<br/>HuggingFace ResNet-50]
-            W[🔍 Vector Service<br/>ChromaDB]
-            X[⚡ Cache Service<br/>Redis (Upstash)]
-            Y[🖼️ Storage Service<br/>B2 Cloud Storage]
+        subgraph Services_Layer["SERVICES LAYER"]
+            U[LLM Service Groq Llama 3.3]
+            V[Vision Service HuggingFace]
+            W[Vector Service ChromaDB]
+            X[Cache Service Redis]
+            Y[Storage Service B2 Cloud]
         end
     end
 
-    subgraph "DATA LAYER"
-        Z[🗄️ PostgreSQL (Neon)<br/>ACID Compliance<br/>3GB Free]
-        AA[📊 ChromaDB<br/>Vector Database<br/>100K Free Vectors]
-        AB[⚡ Redis (Upstash)<br/>Cache + Rate Limiting<br/>10GB Free]
-        AC[🖼️ Object Storage<br/>B2 Cloud Storage<br/>10GB Free]
+    subgraph Data_Layer["DATA LAYER"]
+        Z[PostgreSQL Neon]
+        AA[ChromaDB Vector DB]
+        AB[Redis Cache]
+        AC[B2 Object Storage]
     end
 
-    subgraph "EXTERNAL SERVICES"
-        AD[🔗 Groq API<br/>Llama 3.3 70B<br/>2M Context]
-        AE[🔗 HuggingFace API<br/>Vision Models<br/>Rate Limited]
-        AF[🔗 Pinecone<br/>Vector DB<br/>100K Free]
-        AG[🔗 Backblaze B2<br/>Object Storage<br/>10GB Free]
+    subgraph External_Services["EXTERNAL SERVICES"]
+        AD[Groq API Llama 3.3]
+        AE[HuggingFace Vision API]
+        AF[Pinecone Vector DB]
+        AG[Backblaze B2 Storage]
     end
 
-    subgraph "MONITORING & OPS"
-        AH[📊 Prometheus<br/>Metrics Collection]
-        AI[📈 Grafana<br/>Dashboards]
-        AJ[📋 ELK Stack<br/>Log Aggregation]
-        AK[🔔 Alert Manager<br/>Notifications]
+    subgraph Monitoring["MONITORING AND OPS"]
+        AH[Prometheus Metrics]
+        AI[Grafana Dashboards]
+        AJ[ELK Stack Logs]
+        AK[Alert Manager]
     end
 
-    subgraph "CI/CD PIPELINE"
-        AL[📤 GitHub Actions]
-        AM[🧪 Run Tests<br/>pytest]
-        AN[🔍 Linting<br/>flake8, black]
-        AO[📦 Build Application]
-        AP[🚀 Deploy Backend<br/>Render]
-        AQ[🚀 Deploy Frontend<br/>Vercel]
+    subgraph CICD["CI/CD PIPELINE"]
+        AL[GitHub Actions]
+        AM[Run Tests pytest]
+        AN[Linting flake8 black]
+        AO[Build Application]
+        AP[Deploy Backend Render]
+        AQ[Deploy Frontend Vercel]
     end
 
-    %% Connections - Frontend to Gateway
     F --> A
     A --> G
     G --> H
     H --> I
     I --> J
-    
-    %% Gateway to Application
     J --> K
     K --> L
     L --> M
     M --> N
     
-    %% Orchestrator to Tools
     K --> O1
     K --> O2
     K --> O3
@@ -168,7 +164,6 @@ graph TB
     K --> T4
     K --> T5
     
-    %% Tools to Services
     O1 --> W
     O2 --> W
     O3 --> W
@@ -194,13 +189,11 @@ graph TB
     T4 --> U
     T5 --> U
     
-    %% Orchestrator to Services
     K --> U
     K --> W
     K --> X
     K --> Y
     
-    %% Services to Data Layer
     U --> AD
     V --> AE
     W --> AA
@@ -209,7 +202,6 @@ graph TB
     Y --> AC
     Y --> AG
     
-    %% Tools to Data Layer
     O1 --> Z
     O2 --> Z
     O3 --> Z
@@ -235,7 +227,6 @@ graph TB
     T4 --> Z
     T5 --> Z
     
-    %% Monitoring
     Z --> AH
     AA --> AH
     AB --> AH
@@ -244,33 +235,11 @@ graph TB
     AH --> AJ
     AH --> AK
     
-    %% CI/CD
     AL --> AM
     AM --> AN
     AN --> AO
     AO --> AP
     AO --> AQ
-    
-    %% Styling
-    classDef frontend fill:#e1f5fe,stroke:#01579b,stroke-width:2px
-    classDef gateway fill:#fff3e0,stroke:#e65100,stroke-width:2px
-    classDef orchestrator fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
-    classDef tools fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px
-    classDef services fill:#fff8e1,stroke:#f57f17,stroke-width:2px
-    classDef data fill:#fce4ec,stroke:#b71c1c,stroke-width:2px
-    classDef external fill:#e0f7fa,stroke:#006064,stroke-width:2px
-    classDef monitoring fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
-    classDef cicd fill:#fff3e0,stroke:#e65100,stroke-width:2px
-    
-    class A,B,C,D,E,F frontend
-    class G,H,I,J gateway
-    class K,L,M,N orchestrator
-    class O1,O2,O3,O4,P1,P2,P3,P4,Q1,Q2,Q3,R1,R2,R3,S1,S2,S3,S4,S5,T1,T2,T3,T4,T5 tools
-    class U,V,W,X,Y services
-    class Z,AA,AB,AC data
-    class AD,AE,AF,AG external
-    class AH,AI,AJ,AK monitoring
-    class AL,AM,AN,AO,AP,AQ cicd
 ```
 
 ---
