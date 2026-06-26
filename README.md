@@ -1,72 +1,25 @@
-# MediAgent V2 - AI Medical Assistant
+# 🏥 MediAgent V2 — Production AI Medical Assistant
 
-An intelligent medical assistant that helps doctors find patients, schedule appointments, generate SOAP notes, and analyze medical images using natural language.
+[![Live Demo](https://img.shields.io/badge/Live_Demo-mediagent--eta.vercel.app-1a73e8?style=for-the-badge&logo=vercel)](https://mediagent-eta.vercel.app)
+[![Backend API](https://img.shields.io/badge/Backend_API-mediagent--pn7o.onrender.com-1a73e8?style=for-the-badge&logo=render)](https://mediagent-pn7o.onrender.com)
+[![API Docs](https://img.shields.io/badge/API_Docs-Swagger-1a73e8?style=for-the-badge&logo=swagger)](https://mediagent-pn7o.onrender.com/docs)
 
-## Features
+> **An AI-powered medical assistant that helps doctors manage clinical workflows through natural language conversation. Automates administrative tasks, clinical documentation, and patient management so doctors can focus on patient care instead of paperwork.**
 
-- Natural Language Understanding
-- Vector Search - Handles typos using ChromaDB
-- Multi-Agent AI - LangGraph with Planner, Executor, and Reflector
-- SOAP Notes - Structured JSONB storage
-- Image Storage - Upload medical images
-- Redis Caching - Faster repeated searches
-- JWT Authentication - Secure access
+---
 
-## Tech Stack
+## 🎯 Why MediAgent?
 
-| Layer | Technology |
-|-------|------------|
-| Backend | FastAPI, Python 3.11 |
-| Frontend | React |
-| Database | PostgreSQL (Neon) |
-| Vector DB | ChromaDB |
-| Cache | Redis (Upstash) |
-| LLM | Groq (Llama 3.3 70B) |
-| Agent Framework | LangGraph |
+Doctors spend **15+ hours per week** switching between multiple systems—EHR, scheduling, imaging, pharmacy. MediAgent eliminates this by providing a **single chat interface** where natural language requests trigger automated actions across all domains.
 
-## Quick Start
+| Problem | Impact | MediAgent Solution |
+|---------|--------|-------------------|
+| 15+ hours/week on admin | Less time with patients | Natural language → automated actions |
+| 5+ systems to switch between | Wasted time, frustration | Single unified chat interface |
+| Manual documentation | Inefficient, error-prone | AI-powered SOAP note generation |
+| Delayed image analysis | Slower diagnosis | AI analyzes X-rays in seconds |
+| Complex scheduling | Double-booking, missed appointments | One-command appointment booking |
 
-### Backend Setup
+---
 
-```bash
-cd backend
-python -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-cp .env.example .env
-uvicorn app.main:app --reload
-```
-
-### Frontend Setup
-
-```bash
-cd frontend
-npm install
-npm start
-```
-
-### Login Credentials
-
-- Email: doctor@mediagent.com
-- Password: password123
-
-## Architecture
-
-User Message -> Planner -> Executor -> Reflector -> Response
-
-## Environment Variables
-
-Create a .env file with:
-
-- DATABASE_URL
-- GROQ_API_KEY
-- REDIS_URL
-- JWT_SECRET_KEY
-
-## Author
-
-Rajinder Kaur
-
-## License
-
-MIT
+## 📊 System Architecture
