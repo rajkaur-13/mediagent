@@ -1,0 +1,75 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: mediagent-postgres
+    environment:
+      POSTGRES_USER: mediagent
+      POSTGRES_PASSWORD: mediagent123
+      POSTGRES_DB: mediagent
+    #ports:
+     #- "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mediagent"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - mediagent-network
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: mediagent-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - mediagent-network
+
+  # Backend (FastAPI)
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.backend
+    container_name: mediagent-backend
+    environment:
+      DATABASE_URL: postgresql://mediagent:mediagent123@postgres:5432/mediagent
+      REDIS_URL: redis://redis:6379
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    volumes:
+      - ./backend:/app
+    networks:
+      - mediagent-network
+
+  # Frontend (React)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.frontend
+    container_name: mediagent-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    networks:
+      - mediagent-network
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  mediagent-network:
+    driver: bridge
