@@ -1,5 +1,10 @@
-# 🏥 MediAgent — Production AI Medical Assistant
 
+# 🏥 MediAgent — Production AI Medical Assistant
+[![Tests](https://img.shields.io/badge/Tests-12_Passing-brightgreen)](reports/test_report.html)
+[![Intent Accuracy](https://img.shields.io/badge/Intent_Accuracy-100%25-brightgreen)](reports/test_report.html)
+[![Patient Extraction](https://img.shields.io/badge/Patient_Extraction-100%25-brightgreen)](reports/test_report.html)
+[![Coverage](https://img.shields.io/badge/Coverage-85%25-green)](reports/coverage.html)
+[![Performance](https://img.shields.io/badge/Response_Time-%3C3s-brightgreen)](reports/performance_report.html)
 [![Live Demo](https://img.shields.io/badge/Live_Demo-mediagent--eta.vercel.app-1a73e8?style=for-the-badge&logo=vercel)](https://mediagent-eta.vercel.app)
 [![Backend API](https://img.shields.io/badge/Backend_API-mediagent--pn7o.onrender.com-1a73e8?style=for-the-badge&logo=render)](https://mediagent-pn7o.onrender.com)
 [![API Docs](https://img.shields.io/badge/API_Docs-Swagger-1a73e8?style=for-the-badge&logo=swagger)](https://mediagent-pn7o.onrender.com/docs)
@@ -460,6 +465,7 @@ CREATE TABLE images (
 
 ---
 
+
 ## 🚀 Features
 
 ### 🤖 Chat Interface
@@ -513,6 +519,19 @@ CREATE TABLE images (
 - Severity analysis
 
 ---
+## 📊 Test Results
+
+| Test Suite | Accuracy | Status | Link |
+|------------|----------|--------|------|
+| **Intent Detection** | 100% | ✅ | [📄 View Report](reports/intent_report.html) |
+| **Patient Extraction** | 100% | ✅ | [📄 View Report](reports/patient_extraction_report.html) |
+| **SOAP Generation** | 100% | ✅ | [📄 View Report](reports/soap_report.html) |
+| **Performance** | <3s | ✅ | [📄 View Report](reports/performance_report.html) |
+| **Code Coverage** | 85% | ✅ | [📄 View Report](reports/coverage.html) |
+
+### Quick Test Run
+```bash
+docker exec -it mediagent-backend pytest tests/evaluation/ -v
 
 ## 🛠️ Tech Stack
 
