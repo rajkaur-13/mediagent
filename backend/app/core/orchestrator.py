@@ -568,21 +568,45 @@ class AgentOrchestrator:
         return None
     
     def _extract_patient_name_from_message(self, message: str) -> str:
-        """Extract patient name from message using regex patterns"""
+        """
+        Extract patient name from message using LLM + regex fallback.
+        Handles ANY patient name without hardcoding.
+        """
+        import re
+        
+        # 1. Quick regex fallback for common patterns (fast path)
         patterns = [
-            r'(?:Show me|Search for|Find|get|select)\s+([A-Za-z\s]+)',
+            r'(?:Show me|Search for|Find|get|select|Generate SOAP note for|Create SOAP note for)\s+([A-Za-z\s]+)',
             r'patient\s+([A-Za-z\s]+)',
-            r'^(?:show|find|get)\s+([A-Za-z\s]+)',
+            r'^(?:show|find|get|generate)\s+([A-Za-z\s]+)',
         ]
         
         for pattern in patterns:
             match = re.search(pattern, message, re.IGNORECASE)
             if match:
                 name = match.group(1).strip()
-                name = re.sub(r'\s+(?:please|now|thanks|thank you)$', '', name, flags=re.IGNORECASE)
+                name = re.sub(r'\s+(?:please|now|thanks|thank you|with:|with)$', '', name, flags=re.IGNORECASE)
                 if name and len(name) > 1:
                     return name
         
+        # 2. If regex fails, try LLM-based extraction
+        try:
+            prompt = f"""
+            Extract the patient name from this message. Return ONLY the name, nothing else.
+            If no patient name is found, return "None".
+            
+            Message: "{message}"
+            
+            Patient name:
+            """
+            response = get_llm_response(prompt, [], max_tokens=50)
+            name = response.strip()
+            if name and name != "None" and len(name) > 1:
+                return name
+        except Exception as e:
+            print(f"⚠️ LLM extraction failed: {e}")
+        
+        # 3. Fallback: if message is just a name (2-30 chars, only letters/spaces)
         message_clean = message.strip()
         if re.match(r'^[A-Za-z\s]{2,30}$', message_clean):
             return message_clean
