@@ -1,0 +1,42 @@
+[
+  {
+    "question": "Find patient with last name Smith",
+    "answer": "I'm a large language model, I don't have direct access to patient records or databases. I can provide general medical information, but I'm not capable of searching or retrieving specific patient data.\n\nIf you're looking for a patient with the last name Smith, I recommend checking with your hospital's electronic health record (EHR) system or patient database. Please note that patient information is confidential and should only be accessed by authorized healthcare professionals.\n\nIf you have any other medical questions or need assistance with a specific topic, I'm here to help. Remember, my responses are not a substitute for clinical judgment or professional medical advice.",
+    "contexts": [
+      "No context available"
+    ],
+    "ground_truth": ""
+  },
+  {
+    "question": "Show me upcoming appointments for today",
+    "answer": "\ud83d\udcc5 Found 6 appointments:\n\u2022 Sarah Johnson - 2026-07-04 at 09:00 AM - Follow-up on hypertension\n\u2022 Michael Chen - 2026-07-04 at 10:30 AM - Diabetes management\n\u2022 Emily Rodriguez - 2026-07-05 at 02:00 PM - Asthma follow-up\n\u2022 James Williams - 2026-07-06 at 11:15 AM - COPD exacerbation check\n\u2022 Maria Garcia - 2026-07-08 at 03:30 PM - Anxiety medication review\n\u2022 David Kim - 2026-07-10 at 09:45 AM - Annual physical",
+    "contexts": [
+      "No context available"
+    ],
+    "ground_truth": ""
+  },
+  {
+    "question": "Generate SOAP note for patient with hypertension",
+    "answer": "\u274c Please select a patient first. Type: 'Show me patient [name]'",
+    "contexts": [
+      "No context available"
+    ],
+    "ground_truth": ""
+  },
+  {
+    "question": "Schedule appointment for patient Brown with Dr. Patel",
+    "answer": "Patient 'Brown' not found",
+    "contexts": [
+      "No context available"
+    ],
+    "ground_truth": ""
+  },
+  {
+    "question": "What medications is patient Johnson currently taking?",
+    "answer": "\u2705 **Patient Selected: Sarah Johnson**\n\n\ud83d\udccb **Demographics:** MRN: MRN001 | Age: 45 | Gender: F\n\n\ud83e\ude7a **Medical History:** Allergies: Penicillin | Conditions: Hypertension\n\n\ud83d\udc8a **Current Medications:** Lisinopril\n\n\n\ud83d\udcdd **Latest SOAP Note:**\n\ud83d\udcc5 **Date:** 2026-07-04\n\n\ud83d\udccb **SUBJECTIVE:**\nGenerate SOAP note for patient with hypertension\n\n\ud83d\udd2c **OBJECTIVE:**\nNot documented\nVitals: BP  | HR \n\n\ud83e\udde0 **ASSESSMENT:**\nUnder evaluation\n\n\ud83d\udccb **PLAN:**\nSchedule follow-up in 2 weeks\n\n\n\ud83d\udc8a **Prescriptions:**\n\u2022 No prescriptions yet. Use the Rx tab to generate one.\n\n\ud83e\ude7b **Image Analyses:**\n\u2022 No images analyzed yet. Use the Imaging tab to upload and analyze.\n\n\ud83d\udcc5 **Appointments:**\n\u2022 2026-07-04 at 09:00 AM - Follow-up on hypertension\n\n\ud83d\udcc5 Type 'Schedule appointment' to book a new appointment.\n\n\u2705 Tools are now active for Sarah Johnson.",
+    "contexts": [
+      "No context available"
+    ],
+    "ground_truth": ""
+  }
+]

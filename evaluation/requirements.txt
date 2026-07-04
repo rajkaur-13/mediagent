@@ -1,0 +1,10 @@
+ragas
+langchain
+langchain-community
+langchain-groq
+langchain-openai
+sentence-transformers
+datasets
+pandas
+python-dotenv
+scipy

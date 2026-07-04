@@ -1,0 +1,53 @@
+,user_input,retrieved_contexts,response,reference,context_precision,context_recall,context_entity_recall,faithfulness,answer_relevancy,answer_correctness,answer_similarity,semantic_similarity
+0,Find patient with last name Smith,['No context available'],"I'm a large language model, I don't have direct access to patient records or databases. I can provide general medical information, but I'm not capable of searching or retrieving specific patient data.
+
+If you're looking for a patient with the last name Smith, I recommend checking with your hospital's electronic health record (EHR) system or patient database. Please note that patient information is confidential and should only be accessed by authorized healthcare professionals.
+
+If you have any other medical questions or need assistance with a specific topic, I'm here to help. Remember, my responses are not a substitute for clinical judgment or professional medical advice.",,0.0,0.0,,,,,,
+1,Show me upcoming appointments for today,['No context available'],"📅 Found 6 appointments:
+• Sarah Johnson - 2026-07-04 at 09:00 AM - Follow-up on hypertension
+• Michael Chen - 2026-07-04 at 10:30 AM - Diabetes management
+• Emily Rodriguez - 2026-07-05 at 02:00 PM - Asthma follow-up
+• James Williams - 2026-07-06 at 11:15 AM - COPD exacerbation check
+• Maria Garcia - 2026-07-08 at 03:30 PM - Anxiety medication review
+• David Kim - 2026-07-10 at 09:45 AM - Annual physical",,0.0,,,,,,,
+2,Generate SOAP note for patient with hypertension,['No context available'],❌ Please select a patient first. Type: 'Show me patient [name]',,0.0,0.0,,,,,,
+3,Schedule appointment for patient Brown with Dr. Patel,['No context available'],Patient 'Brown' not found,,,,,,,,,
+4,What medications is patient Johnson currently taking?,['No context available'],"✅ **Patient Selected: Sarah Johnson**
+
+📋 **Demographics:** MRN: MRN001 | Age: 45 | Gender: F
+
+🩺 **Medical History:** Allergies: Penicillin | Conditions: Hypertension
+
+💊 **Current Medications:** Lisinopril
+
+
+📝 **Latest SOAP Note:**
+📅 **Date:** 2026-07-04
+
+📋 **SUBJECTIVE:**
+Generate SOAP note for patient with hypertension
+
+🔬 **OBJECTIVE:**
+Not documented
+Vitals: BP  | HR 
+
+🧠 **ASSESSMENT:**
+Under evaluation
+
+📋 **PLAN:**
+Schedule follow-up in 2 weeks
+
+
+💊 **Prescriptions:**
+• No prescriptions yet. Use the Rx tab to generate one.
+
+🩻 **Image Analyses:**
+• No images analyzed yet. Use the Imaging tab to upload and analyze.
+
+📅 **Appointments:**
+• 2026-07-04 at 09:00 AM - Follow-up on hypertension
+
+📅 Type 'Schedule appointment' to book a new appointment.
+
+✅ Tools are now active for Sarah Johnson.",,,,,,,,,
