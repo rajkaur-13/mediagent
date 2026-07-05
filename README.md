@@ -519,19 +519,6 @@ CREATE TABLE images (
 - Severity analysis
 
 ---
-## 📊 Test Results
-
-| Test Suite | Accuracy | Status | Link |
-|------------|----------|--------|------|
-| **Intent Detection** | 100% | ✅ | [📄 View Report](reports/intent_report.html) |
-| **Patient Extraction** | 100% | ✅ | [📄 View Report](reports/patient_extraction_report.html) |
-| **SOAP Generation** | 100% | ✅ | [📄 View Report](reports/soap_report.html) |
-| **Performance** | <3s | ✅ | [📄 View Report](reports/performance_report.html) |
-| **Code Coverage** | 85% | ✅ | [📄 View Report](reports/coverage.html) |
-
-### Quick Test Run
-```bash
-docker exec -it mediagent-backend pytest tests/evaluation/ -v
 
 
 # 🧪 RAGAS Evaluation (LLM Performance)
