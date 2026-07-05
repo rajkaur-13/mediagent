@@ -1,10 +1,9 @@
 
 # 🏥 MediAgent — Production AI Medical Assistant
-[![Tests](https://img.shields.io/badge/Tests-12_Passing-brightgreen)](reports/test_report.html)
-[![Intent Accuracy](https://img.shields.io/badge/Intent_Accuracy-100%25-brightgreen)](reports/test_report.html)
-[![Patient Extraction](https://img.shields.io/badge/Patient_Extraction-100%25-brightgreen)](reports/test_report.html)
-[![Coverage](https://img.shields.io/badge/Coverage-85%25-green)](reports/coverage.html)
-[![Performance](https://img.shields.io/badge/Response_Time-%3C3s-brightgreen)](reports/performance_report.html)
+[![Tests](https://img.shields.io/badge/Tests-2_Passing-brightgreen)](reports/test_report.html)
+[![Coverage](https://img.shields.io/badge/Coverage-26%25-yellow)](reports/coverage/index.html)
+[![RAGAS Score](https://img.shields.io/badge/RAGAS_Answer_Relevancy-0.6679-blue)](evaluation/results/)
+[![Evaluation](https://img.shields.io/badge/Evaluation-RAGAS_Framework-purple)](evaluation/results/)
 [![Live Demo](https://img.shields.io/badge/Live_Demo-mediagent--eta.vercel.app-1a73e8?style=for-the-badge&logo=vercel)](https://mediagent-eta.vercel.app)
 [![Backend API](https://img.shields.io/badge/Backend_API-mediagent--pn7o.onrender.com-1a73e8?style=for-the-badge&logo=render)](https://mediagent-pn7o.onrender.com)
 [![API Docs](https://img.shields.io/badge/API_Docs-Swagger-1a73e8?style=for-the-badge&logo=swagger)](https://mediagent-pn7o.onrender.com/docs)
