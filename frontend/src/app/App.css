@@ -1,0 +1,1074 @@
+/* ========================================
+   APPLE-INSPIRED FONTS & TYPOGRAPHY
+   ======================================== */
+:root {
+  /* Primary */
+  --primary: #007AFF;
+  --primary-hover: #0055CC;
+  --primary-light: #E5F1FF;
+  
+  /* Accents */
+  --success: #34C759;
+  --warning: #FF9500;
+  --danger: #FF3B30;
+  
+  /* Text */
+  --text-primary: #1C1C1E;
+  --text-secondary: #6E6E73;
+  --text-muted: #AEAEB2;
+  
+  /* Backgrounds */
+  --bg-main: #F5F5F7;
+  --bg-input: #F5F5F7;
+  --bg-card: rgba(255, 255, 255, 0.55);
+  
+  /* Borders */
+  --border: #E5E5EA;
+  
+  /* Glass */
+  --glass-bg: rgba(255, 255, 255, 0.55);
+  --glass-border: rgba(255, 255, 255, 0.4);
+  
+  /* Shadows */
+  --shadow: 0 8px 40px rgba(0, 0, 0, 0.06);
+  --shadow-hover: 0 12px 60px rgba(0, 0, 0, 0.10);
+  
+  /* Radius */
+  --radius: 16px;
+  --radius-lg: 24px;
+  
+  /* Spacing */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 12px;
+  --space-lg: 16px;
+  --space-xl: 20px;
+  --space-2xl: 24px;
+  --space-3xl: 32px;
+  
+  /* ===== FONTS ===== */
+  --font-display: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', sans-serif;
+  --font-body: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', sans-serif;
+  --font-mono: 'SF Mono', 'Menlo', 'Monaco', monospace;
+}
+
+/* ========================================
+   BASE
+   ======================================== */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background: 
+    radial-gradient(circle at 15% 20%, #B9DDF9 0%, transparent 45%),
+    radial-gradient(circle at 85% 25%, #CFF4D2 0%, transparent 40%),
+    radial-gradient(circle at 50% 85%, #CDE8FB 0%, transparent 40%),
+    linear-gradient(135deg, #EAF6FF 0%, #DDF2FF 50%, #EAFCEB 100%);
+  font-family: var(--font-body);
+  color: var(--text-primary);
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ===== TYPOGRAPHY HIERARCHY ===== */
+
+/* Display - Large Titles */
+h1, .h1, .title, .patient-name {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+}
+
+/* Heading 2 - Section Titles */
+h2, .h2, .panel-header, .section-title {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--text-secondary);
+}
+
+/* Heading 3 - Sub-sections */
+h3, .h3, .card-title, .tab {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  color: var(--text-primary);
+}
+
+/* Body Text */
+p, .body, .message-text, .patient-detail, .appointment-item {
+  font-family: var(--font-body);
+  font-weight: 400;
+  line-height: 1.6;
+  color: var(--text-primary);
+}
+
+/* Small Text */
+small, .caption, .message-time, .badge, .appointment-date {
+  font-family: var(--font-body);
+  font-weight: 400;
+  font-size: 12px;
+  color: var(--text-muted);
+  letter-spacing: 0.01em;
+}
+
+/* Labels */
+label, .label, .soap-field label {
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+}
+
+/* Buttons */
+button, .btn, .send-btn, .add-patient-btn, .save-btn, .quick-btn, .tab {
+  font-family: var(--font-body);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+
+/* Inputs */
+input, textarea, select {
+  font-family: var(--font-body);
+  font-weight: 400;
+  letter-spacing: -0.01em;
+}
+
+/* Bold */
+strong, b {
+  font-weight: 600;
+  color: var(--text-primary) !important;
+}
+
+/* ========================================
+   HEADER
+   ======================================== */
+.header {
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--glass-border);
+  padding: 16px 32px;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.logo {
+  font-size: 28px;
+}
+
+.title {
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  background: linear-gradient(135deg, var(--primary), #5856D6);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.badge {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  background: var(--primary-light);
+  color: var(--primary);
+  padding: 4px 12px;
+  border-radius: 20px;
+}
+
+.doctor-info {
+  font-size: 14px;
+  font-weight: 500;
+  background: var(--bg-input);
+  padding: 8px 16px;
+  border-radius: 20px;
+  color: var(--text-primary);
+}
+
+.header-right {
+  display: flex;
+  gap: var(--space-sm);
+}
+
+.icon-btn {
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+  transition: background 0.2s;
+  color: var(--text-secondary);
+}
+
+.icon-btn:hover {
+  background: var(--bg-input);
+}
+
+/* ========================================
+   MAIN LAYOUT
+   ======================================== */
+.main-container {
+  display: flex;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 90px 24px 24px 24px;
+  gap: 24px;
+  min-height: 100vh;
+}
+
+.panel {
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.panel:hover {
+  box-shadow: var(--shadow-hover);
+}
+
+.panel-patient {
+  width: 340px;
+  flex-shrink: 0;
+  height: calc(100vh - 110px);
+  overflow-y: auto;
+}
+
+.panel-chat {
+  flex: 1;
+  height: calc(100vh - 110px);
+  display: flex;
+  flex-direction: column;
+}
+
+.panel-tools {
+  width: 400px;
+  flex-shrink: 0;
+  height: calc(100vh - 110px);
+  overflow-y: auto;
+}
+
+.panel-header {
+  padding: 20px 24px;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--text-secondary);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+/* ========================================
+   CHAT
+   ======================================== */
+.chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-height: 0;
+}
+
+.message {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  max-width: 88%;
+}
+
+.message.user {
+  flex-direction: row-reverse;
+  align-self: flex-end;
+}
+
+.message-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: var(--bg-input);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.message.user .message-avatar {
+  background: var(--primary);
+}
+
+.message-bubble {
+  padding: 12px 18px;
+  border-radius: 22px;
+  background: white;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+  max-width: 100%;
+}
+
+.message.user .message-bubble {
+  background: var(--primary);
+  color: white;
+}
+
+.message-text {
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--text-primary);
+}
+
+.message.user .message-text {
+  color: white;
+}
+
+.message-text strong {
+  color: inherit !important;
+}
+
+.message-time {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 6px;
+  text-align: right;
+  letter-spacing: 0.01em;
+}
+
+.message.user .message-time {
+  color: rgba(255,255,255,0.7);
+}
+
+.patient-name-link {
+  color: var(--primary) !important;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.patient-name-link:hover {
+  color: var(--primary-hover) !important;
+}
+
+/* ========================================
+   CHAT INPUT
+   ======================================== */
+.chat-input-area {
+  padding: 16px 24px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  gap: 14px;
+  flex-shrink: 0;
+  background: var(--glass-bg);
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+}
+
+.chat-input-area textarea {
+  flex: 1;
+  padding: 12px 18px;
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  font-size: 15px;
+  resize: none;
+  background: var(--bg-input);
+  transition: all 0.2s;
+  font-family: var(--font-body);
+  min-height: 44px;
+  max-height: 120px;
+  line-height: 1.5;
+  color: var(--text-primary);
+}
+
+.chat-input-area textarea:focus {
+  border-color: var(--primary);
+  background: white;
+  box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.08);
+  outline: none;
+}
+
+.chat-input-area textarea::placeholder {
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+.send-btn {
+  padding: 0 28px;
+  background: var(--primary);
+  color: white;
+  border: none;
+  border-radius: 22px;
+  font-weight: 600;
+  font-size: 15px;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+  height: 44px;
+}
+
+.send-btn:hover {
+  background: var(--primary-hover);
+  transform: scale(1.02);
+}
+
+/* ========================================
+   SEARCH & PATIENT
+   ======================================== */
+.search-box {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.search-box input {
+  width: 100%;
+  padding: 12px 18px;
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  font-size: 15px;
+  background: var(--bg-input);
+  transition: all 0.2s;
+  color: var(--text-primary);
+  font-family: var(--font-body);
+}
+
+.search-box input:focus {
+  border-color: var(--primary);
+  background: white;
+  box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.08);
+  outline: none;
+}
+
+.search-box input::placeholder {
+  color: var(--text-muted);
+}
+
+.add-patient-btn {
+  width: 100%;
+  margin-top: 12px;
+  padding: 12px;
+  background: var(--primary);
+  color: white;
+  border: none;
+  border-radius: 22px;
+  font-weight: 500;
+  font-size: 15px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: var(--font-body);
+}
+
+.add-patient-btn:hover {
+  background: var(--primary-hover);
+  transform: scale(1.01);
+}
+
+.patient-card {
+  padding: 20px;
+  margin: 16px 20px;
+  background: var(--bg-input);
+  border-radius: var(--radius);
+}
+
+.patient-name {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+  margin-bottom: 6px;
+}
+
+.patient-detail {
+  font-size: 14px;
+  color: var(--text-secondary);
+  padding: 5px 0;
+}
+
+.alert-badge {
+  background: rgba(255, 59, 48, 0.1);
+  color: var(--danger);
+  padding: 5px 14px;
+  border-radius: 14px;
+  font-size: 13px;
+  font-weight: 500;
+  display: inline-block;
+  margin: 6px 0;
+}
+
+.clear-patient-btn {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 8px 16px;
+  color: var(--danger);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-top: 10px;
+  font-family: var(--font-body);
+}
+
+.clear-patient-btn:hover {
+  background: rgba(255, 59, 48, 0.1);
+}
+
+.no-patient {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--text-muted);
+}
+
+.no-patient span {
+  font-size: 48px;
+  display: block;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.no-patient p {
+  font-size: 16px;
+  font-weight: 500;
+  margin-bottom: 6px;
+  color: var(--text-secondary);
+}
+
+.no-patient small {
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+/* ========================================
+   TABS
+   ======================================== */
+.panel-tabs {
+  background: var(--bg-input);
+  border-radius: var(--radius);
+  padding: 6px;
+  margin: 16px 20px;
+  display: flex;
+  gap: 6px;
+}
+
+.tab {
+  flex: 1;
+  padding: 10px 14px;
+  border: none;
+  background: transparent;
+  border-radius: 14px;
+  font-weight: 500;
+  font-size: 14px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: var(--font-body);
+  letter-spacing: -0.01em;
+}
+
+.tab.active {
+  background: white;
+  color: var(--primary);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+
+.tab.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ========================================
+   SOAP
+   ======================================== */
+.soap-editor,
+.xray-tab {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 20px 20px 20px;
+  min-height: 0;
+}
+
+.soap-field {
+  margin-bottom: 16px;
+}
+
+.soap-field label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+}
+
+.soap-field textarea,
+.soap-field input {
+  width: 100%;
+  padding: 12px 16px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  font-size: 14px;
+  background: var(--bg-input);
+  transition: all 0.2s;
+  font-family: var(--font-body);
+  color: var(--text-primary);
+}
+
+.soap-field textarea:focus,
+.soap-field input:focus {
+  border-color: var(--primary);
+  background: white;
+  box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.08);
+  outline: none;
+}
+
+.soap-field textarea::placeholder,
+.soap-field input::placeholder {
+  color: var(--text-muted);
+}
+
+.soap-field textarea {
+  min-height: 60px;
+}
+
+.save-btn {
+  width: 100%;
+  padding: 14px;
+  background: var(--primary);
+  color: white;
+  border: none;
+  border-radius: 16px;
+  font-weight: 600;
+  font-size: 15px;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-top: 4px;
+  font-family: var(--font-body);
+  letter-spacing: -0.01em;
+}
+
+.save-btn:hover {
+  background: var(--primary-hover);
+  transform: scale(1.01);
+}
+
+/* ========================================
+   QUICK ACTIONS
+   ======================================== */
+.quick-actions {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  padding: 16px 20px;
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.quick-btn {
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: white;
+  font-weight: 500;
+  font-size: 14px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: var(--font-body);
+  letter-spacing: -0.01em;
+}
+
+.quick-btn:hover {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow);
+}
+
+.quick-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* ========================================
+   APPOINTMENTS
+   ======================================== */
+.appointments-card {
+  padding: 16px 20px;
+  border-top: 1px solid var(--border);
+  margin-top: auto;
+}
+
+.appointments-card h4 {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+  margin-bottom: 10px;
+}
+
+.appointment-item {
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.appointment-patient {
+  font-weight: 500;
+  font-size: 14px;
+  color: var(--text-primary);
+}
+
+.appointment-date {
+  font-size: 12px;
+  color: var(--success);
+  margin-top: 3px;
+}
+
+.no-appointments {
+  padding: 10px 0;
+  color: var(--text-muted);
+  font-size: 14px;
+  text-align: center;
+}
+
+/* ========================================
+   DISABLED OVERLAY
+   ======================================== */
+.disabled-overlay {
+  text-align: center;
+  padding: 50px 20px;
+  color: var(--text-muted);
+}
+
+.disabled-overlay span {
+  font-size: 48px;
+  display: block;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.disabled-overlay p {
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+/* ========================================
+   TYPING INDICATOR
+   ======================================== */
+.typing-indicator {
+  display: flex;
+  gap: 5px;
+  padding: 6px 0;
+}
+
+.typing-indicator span {
+  width: 8px;
+  height: 8px;
+  background: var(--text-muted);
+  border-radius: 50%;
+  animation: typingBounce 1.4s infinite ease-in-out;
+}
+
+.typing-indicator span:nth-child(1) { animation-delay: 0s; }
+.typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+.typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes typingBounce {
+  0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+  30% { transform: translateY(-8px); opacity: 1; }
+}
+
+/* ========================================
+   RESPONSIVE
+   ======================================== */
+@media (max-width: 1024px) {
+  .panel-patient { width: 300px; }
+  .panel-tools { width: 340px; }
+  .main-container { gap: 18px; padding: 90px 18px 18px 18px; }
+}
+
+@media (max-width: 820px) {
+  .header {
+    padding: 12px 20px;
+  }
+  .title {
+    font-size: 20px;
+  }
+  .badge {
+    display: none;
+  }
+  .doctor-info {
+    font-size: 12px;
+    padding: 4px 12px;
+  }
+  .panel {
+    border-radius: 20px;
+  }
+  .panel-header {
+    font-size: 13px;
+    padding: 14px 18px;
+  }
+  .main-container {
+    padding: 80px 14px 14px 14px;
+    gap: 14px;
+  }
+  .panel-patient { width: 100%; max-height: 35vh; }
+  .panel-tools { width: 100%; max-height: 40vh; }
+  .panel-chat { min-height: 300px; }
+  .chat-messages { padding: 14px 16px; gap: 12px; }
+}
+
+@media (max-width: 480px) {
+  .header {
+    padding: 8px 14px;
+  }
+  .title {
+    font-size: 17px;
+  }
+  .logo {
+    font-size: 22px;
+  }
+  .panel {
+    border-radius: 16px;
+  }
+  .panel-header {
+    font-size: 12px;
+    padding: 10px 14px;
+  }
+  .main-container {
+    padding: 68px 10px 10px 10px;
+    gap: 10px;
+  }
+  .quick-actions {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    padding: 12px 14px;
+  }
+  .quick-btn {
+    font-size: 12px;
+    padding: 10px;
+  }
+  .chat-input-area {
+    padding: 10px 14px;
+    gap: 10px;
+  }
+  .chat-input-area textarea {
+    font-size: 13px;
+    padding: 8px 14px;
+    min-height: 36px;
+  }
+  .send-btn {
+    font-size: 13px;
+    padding: 0 18px;
+    height: 36px;
+  }
+  .panel-tabs {
+    margin: 10px 12px;
+    padding: 4px;
+  }
+  .tab {
+    font-size: 11px;
+    padding: 6px 8px;
+  }
+  .search-box {
+    padding: 10px 12px;
+  }
+  .search-box input {
+    font-size: 13px;
+    padding: 8px 14px;
+  }
+  .patient-card {
+    padding: 14px;
+    margin: 10px 12px;
+  }
+  .patient-name {
+    font-size: 18px;
+  }
+  .patient-detail {
+    font-size: 13px;
+  }
+}
+
+/* ========================================
+   SHADOWS - APPLE STYLE
+   ======================================== */
+.panel {
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.06);
+}
+
+.panel:hover {
+  box-shadow: 0 12px 60px rgba(0, 0, 0, 0.10);
+}
+
+.message-bubble {
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+}
+
+.patient-card {
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+}
+
+.tab.active {
+  box-shadow: 0 2px 12px rgba(0, 122, 255, 0.12);
+}
+
+.quick-btn:hover {
+  box-shadow: 0 4px 20px rgba(0, 122, 255, 0.20);
+}
+
+/* ========================================
+   ANIMATIONS - SMOOTH
+   ======================================== */
+.panel {
+  transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.panel:hover {
+  transform: translateY(-2px);
+}
+
+.message {
+  animation: fadeInUp 0.3s ease-out;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.quick-btn {
+  transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.send-btn {
+  transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.tab {
+  transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* ========================================
+   ICON IMPROVEMENTS
+   ======================================== */
+
+/* Make icons more visible */
+.logo {
+  font-size: 30px;
+}
+
+.icon-btn {
+  font-size: 20px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+  transition: all 0.2s;
+  color: var(--text-secondary);
+}
+
+.icon-btn:hover {
+  background: var(--bg-input);
+  transform: scale(1.05);
+}
+
+/* Send button icon */
+.send-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.send-btn::after {
+  content: "→";
+  font-size: 18px;
+  font-weight: 300;
+}
+
+/* Quick action icons - more prominent */
+.quick-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.quick-btn .icon {
+  font-size: 18px;
+}
+
+/* Tab icons */
+.tab {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.tab .icon {
+  font-size: 16px;
+}
+
+/* Avatar icons */
+.message-avatar {
+  font-size: 18px;
+}
+
+/* Patient card icons */
+.patient-detail .icon {
+  margin-right: 6px;
+  opacity: 0.7;
+}
+
+/* Appointment icons */
+.appointment-item .icon {
+  margin-right: 6px;
+  opacity: 0.7;
+}
+
+/* Consistent icon sizing */
+.icon-sm { font-size: 14px; }
+.icon-md { font-size: 18px; }
+.icon-lg { font-size: 24px; }
+.icon-xl { font-size: 32px; }
+
