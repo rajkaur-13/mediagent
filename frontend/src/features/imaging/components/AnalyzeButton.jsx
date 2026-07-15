@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
-const API_URL = 'https://mediagent-pn7o.onrender.com';
+import { api } from '../../../services/api';
 
-function AnalyzeButton({ patientId, token, onAnalysisComplete }) {
-  const [analyzing, setAnalyzing] = useState(false);
-  const [analysis, setAnalysis] = useState(null);
+const AnalyzeButton = ({ patientId, token, onAnalysisComplete }) => {
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
 
   const handleAnalyze = async () => {
     if (!patientId) {
@@ -11,48 +10,42 @@ function AnalyzeButton({ patientId, token, onAnalysisComplete }) {
       return;
     }
 
-    setAnalyzing(true);
-    
+    setIsAnalyzing(true);
     try {
-      const response = await fetch(`${API_URL}/api/analyze/full/${patientId}`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
+      const result = await api.analyzePatient(token, patientId);
       
-      const data = await response.json();
-      setAnalysis(data);
-      
+      // Send analysis to chat panel via callback
       if (onAnalysisComplete) {
-        onAnalysisComplete(data);
+        onAnalysisComplete(result);
       }
+      
+      setIsAnalyzing(false);
     } catch (error) {
       console.error('Analysis failed:', error);
       alert('Analysis failed: ' + error.message);
-    } finally {
-      setAnalyzing(false);
+      setIsAnalyzing(false);
     }
   };
 
   return (
-    <div className="analyze-container">
-      <button 
-        className="analyze-full-btn" 
-        onClick={handleAnalyze} 
-        disabled={analyzing || !patientId}
-      >
-        {analyzing ? '🔍 Analyzing with latest research...' : '🔬 Analyze & Recommend'}
-      </button>
-      
-      {analysis && analysis.formatted_response && (
-        <div className="analysis-full-result">
-          <div dangerouslySetInnerHTML={{ __html: analysis.formatted_response.replace(/\n/g, '<br/>') }} />
-        </div>
+    <button 
+      className="analyze-btn-premium"
+      onClick={handleAnalyze}
+      disabled={isAnalyzing}
+    >
+      {isAnalyzing ? (
+        <>
+          <span className="analyze-spinner"></span>
+          Analyzing...
+        </>
+      ) : (
+        <>
+          <span className="analyze-icon">✨</span>
+          Analyze & Recommend
+        </>
       )}
-    </div>
+    </button>
   );
-}
+};
 
 export default AnalyzeButton;

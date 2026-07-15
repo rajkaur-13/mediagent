@@ -1,0 +1,110 @@
+/* ========================================
+   RESPONSIVE
+   ======================================== */
+@media (max-width: 1024px) {
+  .panel-patient { width: 300px; }
+  .panel-tools { width: 340px; }
+  .main-container { gap: 18px; padding: 90px 18px 18px 18px; }
+}
+
+@media (max-width: 820px) {
+  .header {
+    padding: 12px 20px;
+  }
+  .title {
+    font-size: 20px;
+  }
+  .badge {
+    display: none;
+  }
+  .doctor-info {
+    font-size: 12px;
+    padding: 4px 12px;
+  }
+  .panel {
+    border-radius: 20px;
+  }
+  .panel-header {
+    font-size: 13px;
+    padding: 14px 18px;
+  }
+  .main-container {
+    padding: 80px 14px 14px 14px;
+    gap: 14px;
+  }
+  .panel-patient { width: 100%; max-height: 35vh; }
+  .panel-tools { width: 100%; max-height: 40vh; }
+  .panel-chat { min-height: 300px; }
+  .chat-messages { padding: 14px 16px; gap: 12px; }
+}
+
+@media (max-width: 480px) {
+  .header {
+    padding: 8px 14px;
+  }
+  .title {
+    font-size: 17px;
+  }
+  .logo {
+    font-size: 22px;
+  }
+  .panel {
+    border-radius: 16px;
+  }
+  .panel-header {
+    font-size: 12px;
+    padding: 10px 14px;
+  }
+  .main-container {
+    padding: 68px 10px 10px 10px;
+    gap: 10px;
+  }
+  .quick-actions {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    padding: 12px 14px;
+  }
+  .quick-btn {
+    font-size: 12px;
+    padding: 10px;
+  }
+  .chat-input-area {
+    padding: 10px 14px;
+    gap: 10px;
+  }
+  .chat-input-area textarea {
+    font-size: 13px;
+    padding: 8px 14px;
+    min-height: 36px;
+  }
+  .send-btn {
+    font-size: 13px;
+    padding: 0 18px;
+    height: 36px;
+  }
+  .panel-tabs {
+    margin: 10px 12px;
+    padding: 4px;
+  }
+  .tab {
+    font-size: 11px;
+    padding: 6px 8px;
+  }
+  .search-box {
+    padding: 10px 12px;
+  }
+  .search-box input {
+    font-size: 13px;
+    padding: 8px 14px;
+  }
+  .patient-card {
+    padding: 14px;
+    margin: 10px 12px;
+  }
+  .patient-name {
+    font-size: 18px;
+  }
+  .patient-detail {
+    font-size: 13px;
+  }
+}

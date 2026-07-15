@@ -1,0 +1,96 @@
+/* ========================================
+   BASE
+   ======================================== */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background: 
+    radial-gradient(circle at 15% 20%, #B9DDF9 0%, transparent 45%),
+    radial-gradient(circle at 85% 25%, #CFF4D2 0%, transparent 40%),
+    radial-gradient(circle at 50% 85%, #CDE8FB 0%, transparent 40%),
+    linear-gradient(135deg, #EAF6FF 0%, #DDF2FF 50%, #EAFCEB 100%);
+  font-family: var(--font-body);
+  color: var(--text-primary);
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ===== TYPOGRAPHY HIERARCHY ===== */
+
+/* Display - Large Titles */
+h1, .h1, .title, .patient-name {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+}
+
+/* Heading 2 - Section Titles */
+h2, .h2, .panel-header, .section-title {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--text-secondary);
+}
+
+/* Heading 3 - Sub-sections */
+h3, .h3, .card-title, .tab {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  color: var(--text-primary);
+}
+
+/* Body Text */
+p, .body, .message-text, .patient-detail, .appointment-item {
+  font-family: var(--font-body);
+  font-weight: 400;
+  line-height: 1.6;
+  color: var(--text-primary);
+}
+
+/* Small Text */
+small, .caption, .message-time, .badge, .appointment-date {
+  font-family: var(--font-body);
+  font-weight: 400;
+  font-size: 12px;
+  color: var(--text-muted);
+  letter-spacing: 0.01em;
+}
+
+/* Labels */
+label, .label, .soap-field label {
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+}
+
+/* Buttons */
+button, .btn, .send-btn, .add-patient-btn, .save-btn, .quick-btn, .tab {
+  font-family: var(--font-body);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+
+/* Inputs */
+input, textarea, select {
+  font-family: var(--font-body);
+  font-weight: 400;
+  letter-spacing: -0.01em;
+}
+
+/* Bold */
+strong, b {
+  font-weight: 600;
+  color: var(--text-primary) !important;
+}

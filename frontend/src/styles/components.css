@@ -1,0 +1,112 @@
+/* ========================================
+   SHADOWS - APPLE STYLE
+   ======================================== */
+.panel {
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.06);
+}
+
+.panel:hover {
+  box-shadow: 0 12px 60px rgba(0, 0, 0, 0.10);
+}
+
+.message-bubble {
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+}
+
+.patient-card {
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+}
+
+.tab.active {
+  box-shadow: 0 2px 12px rgba(0, 122, 255, 0.12);
+}
+
+.quick-btn:hover {
+  box-shadow: 0 4px 20px rgba(0, 122, 255, 0.20);
+}
+
+/* ========================================
+   ICON IMPROVEMENTS
+   ======================================== */
+
+/* Make icons more visible */
+.logo {
+  font-size: 30px;
+}
+
+.icon-btn {
+  font-size: 20px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+  transition: all 0.2s;
+  color: var(--text-secondary);
+}
+
+.icon-btn:hover {
+  background: var(--bg-input);
+  transform: scale(1.05);
+}
+
+/* Send button icon */
+.send-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.send-btn::after {
+  content: "→";
+  font-size: 18px;
+  font-weight: 300;
+}
+
+/* Quick action icons - more prominent */
+.quick-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.quick-btn .icon {
+  font-size: 18px;
+}
+
+/* Tab icons */
+.tab {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.tab .icon {
+  font-size: 16px;
+}
+
+/* Avatar icons */
+.message-avatar {
+  font-size: 18px;
+}
+
+/* Patient card icons */
+.patient-detail .icon {
+  margin-right: 6px;
+  opacity: 0.7;
+}
+
+/* Appointment icons */
+.appointment-item .icon {
+  margin-right: 6px;
+  opacity: 0.7;
+}
+
+/* Consistent icon sizing */
+.icon-sm { font-size: 14px; }
+.icon-md { font-size: 18px; }
+.icon-lg { font-size: 24px; }
+.icon-xl { font-size: 32px; }

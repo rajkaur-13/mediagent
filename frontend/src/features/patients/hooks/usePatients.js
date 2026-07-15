@@ -4,6 +4,7 @@ import { api } from '../../../services/api';
 export const usePatients = (token, setMessages) => {
   const [currentPatient, setCurrentPatient] = useState(null);
   const [patientCache, setPatientCache] = useState({});
+  const [patients, setPatients] = useState([]);
   const [allPatientNames, setAllPatientNames] = useState([]);
   const [showAddPatient, setShowAddPatient] = useState(false);
   const [newPatient, setNewPatient] = useState({
@@ -25,7 +26,9 @@ export const usePatients = (token, setMessages) => {
         const data = await api.getPatients(token);
         const nameMap = {};
         const names = [];
-        data.patients?.forEach(p => {
+        const patientList = data.patients || [];
+        setPatients(patientList);
+        patientList.forEach(p => {
           nameMap[p.name] = p.mrn || p.id;
           names.push(p.name);
         });
@@ -191,6 +194,8 @@ export const usePatients = (token, setMessages) => {
   }, [handleDirectPatientSelect]);
 
   return {
+    patients,
+
     currentPatient,
     setCurrentPatient,
     patientCache,
