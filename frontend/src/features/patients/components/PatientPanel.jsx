@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import AnalyzeButton from '../../imaging/components/AnalyzeButton.jsx';
+import { FileText, Pill, Image, AlertTriangle, HeartPulse, Droplet, Phone, Calendar } from 'lucide-react';
 
 const PatientPanel = ({ 
   patients, 
@@ -19,6 +20,7 @@ const PatientPanel = ({
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [showResults, setShowResults] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
   const searchRef = useRef(null);
   const resultsRef = useRef(null);
 
@@ -39,6 +41,7 @@ const PatientPanel = ({
     handlePatientClick(patient.name);
     setSearchTerm('');
     setShowResults(false);
+    setShowDropdown(false);
   };
 
   // Handle Enter key in search
@@ -53,6 +56,7 @@ const PatientPanel = ({
     const handleClickOutside = (event) => {
       if (searchRef.current && !searchRef.current.contains(event.target)) {
         setShowResults(false);
+        setShowDropdown(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -75,19 +79,24 @@ const PatientPanel = ({
     images: currentPatient?.image_count || 0
   };
 
+  // Get today's appointments
+  const todayAppointments = upcomingAppointments?.filter(apt => 
+    new Date(apt.date).toDateString() === new Date().toDateString()
+  ) || [];
+
   return (
     <div className="panel panel-patient">
       {/* ===== HEADER ===== */}
-      <div className="patient-panel-header">
-        <div className="patient-panel-title">
-          <span className="icon">📋</span> Patient Context
+      <div className="patient-panel-header-wrapper">
+        <div className="patient-panel-header">
+          <div className="patient-panel-title">
+            <span className="icon">📋</span> Patient Context
+          </div>
+          <div className="patient-panel-menu">⋯</div>
         </div>
-        <div className="patient-panel-menu">⋯</div>
-      </div>
-
-      {/* ===== SUBTITLE ===== */}
-      <div className="patient-panel-subtitle">
-        Patient information &amp; AI-powered actions.
+        <div className="patient-panel-subtitle">
+          Patient information &amp; AI-powered actions.
+        </div>
       </div>
 
       {/* ===== SEARCH ===== */}
@@ -95,12 +104,27 @@ const PatientPanel = ({
         <span className="search-icon">🔍</span>
         <input 
           type="text" 
-          placeholder="Search patient by name or MRN..." 
+          placeholder="Search patient by Name or MRN..." 
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           onKeyPress={handleSearchKeyPress}
-          onFocus={() => searchTerm.length > 0 && setShowResults(true)}
+          onFocus={() => {
+            if (searchTerm.length > 0) {
+              setShowResults(true);
+            } else {
+              setShowDropdown(true);
+            }
+          }}
         />
+        <span 
+          className="search-dropdown-arrow"
+          onClick={() => {
+            setShowDropdown(!showDropdown);
+            setShowResults(false);
+          }}
+        >
+          ▼
+        </span>
         {searchTerm && filteredPatients.length > 0 && (
           <span 
             className="search-arrow"
@@ -110,46 +134,77 @@ const PatientPanel = ({
             →
           </span>
         )}
-        {searchTerm && filteredPatients.length === 0 && (
-          <span className="search-arrow disabled">✕</span>
-        )}
       </div>
 
       {/* ===== SEARCH RESULTS ===== */}
-      {showResults && searchTerm && (
+      {(showResults || showDropdown) && (
         <div className="patient-search-results" ref={resultsRef}>
-          <div className="search-results-header">
-            <span>{filteredPatients.length} result{filteredPatients.length !== 1 ? 's' : ''}</span>
-          </div>
-          {filteredPatients.length > 0 ? (
-            filteredPatients.map((patient) => (
-              <div 
-                key={patient.id || patient.mrn}
-                className="patient-list-item"
-                onClick={() => handleSelectPatient(patient)}
-              >
-                <div className="patient-list-avatar">
-                  {getInitials(patient.name)}
-                </div>
-                <div className="patient-list-info">
-                  <div className="patient-list-name">{patient.name}</div>
-                  <div className="patient-list-details">
-                    <span>{patient.mrn}</span>
-                    <span>•</span>
-                    <span>{patient.age} yrs</span>
-                    <span>•</span>
-                    <span>{patient.gender}</span>
+          {showDropdown && !searchTerm ? (
+            <>
+              <div className="search-results-header">Recent Patients</div>
+              {patients?.slice(0, 5).map((patient) => (
+                <div 
+                  key={patient.id || patient.mrn}
+                  className="patient-list-item"
+                  onClick={() => handleSelectPatient(patient)}
+                >
+                  <div className="patient-list-avatar">
+                    {getInitials(patient.name)}
                   </div>
+                  <div className="patient-list-info">
+                    <div className="patient-list-name">{patient.name}</div>
+                    <div className="patient-list-details">
+                      <span>{patient.mrn}</span>
+                      <span>•</span>
+                      <span>{patient.age} yrs</span>
+                    </div>
+                  </div>
+                  <span className="patient-list-arrow">→</span>
                 </div>
-                <span className="patient-list-arrow">→</span>
-              </div>
-            ))
+              ))}
+              {patients?.length === 0 && (
+                <div className="no-search-results">
+                  <span>👤</span>
+                  <p>No recent patients</p>
+                </div>
+              )}
+            </>
           ) : (
-            <div className="no-search-results">
-              <span>🔍</span>
-              <p>No patients found</p>
-              <small>Try a different search term</small>
-            </div>
+            <>
+              <div className="search-results-header">
+                <span>{filteredPatients.length} result{filteredPatients.length !== 1 ? 's' : ''}</span>
+              </div>
+              {filteredPatients.length > 0 ? (
+                filteredPatients.map((patient) => (
+                  <div 
+                    key={patient.id || patient.mrn}
+                    className="patient-list-item"
+                    onClick={() => handleSelectPatient(patient)}
+                  >
+                    <div className="patient-list-avatar">
+                      {getInitials(patient.name)}
+                    </div>
+                    <div className="patient-list-info">
+                      <div className="patient-list-name">{patient.name}</div>
+                      <div className="patient-list-details">
+                        <span>{patient.mrn}</span>
+                        <span>•</span>
+                        <span>{patient.age} yrs</span>
+                        <span>•</span>
+                        <span>{patient.gender}</span>
+                      </div>
+                    </div>
+                    <span className="patient-list-arrow">→</span>
+                  </div>
+                ))
+              ) : (
+                <div className="no-search-results">
+                  <span>🔍</span>
+                  <p>No patients found</p>
+                  <small>Try a different search term</small>
+                </div>
+              )}
+            </>
           )}
         </div>
       )}
@@ -166,91 +221,119 @@ const PatientPanel = ({
 
       {/* ===== CURRENT PATIENT CARD ===== */}
       {currentPatient ? (
-        <div className="current-patient-card">
-          {/* Avatar & Name - Vertical Layout */}
-          <div className="patient-avatar-section-vertical">
-            <div className="patient-avatar-large">
+        <div className="current-patient-card-premium">
+          {/* Avatar & Name */}
+          <div className="patient-avatar-premium">
+            <div className="patient-avatar-circle">
               {getInitials(currentPatient.name)}
             </div>
-            <div className="patient-info-vertical">
-              <div className="patient-name-vertical">{currentPatient.name}</div>
-              <div className="patient-status-vertical">
-                <span className="status-dot-green-small"></span>
-                <span>Active</span>
+            <div className="patient-name-section">
+              <div className="patient-name-premium">{currentPatient.name}</div>
+              <div className="patient-status-premium">
+                <span className="status-dot-premium"></span>
+                Active
               </div>
             </div>
           </div>
 
-          {/* Patient Details - Vertical Layout */}
-          <div className="patient-details-vertical">
-            <div className="patient-detail-row">
+          {/* Patient Details Grid */}
+          <div className="patient-details-premium">
+            <div className="detail-item">
               <span className="detail-label">MRN</span>
               <span className="detail-value">{currentPatient.mrn}</span>
             </div>
-            <div className="patient-detail-row">
+            <div className="detail-item">
               <span className="detail-label">Age</span>
               <span className="detail-value">{currentPatient.age} yrs</span>
             </div>
-            <div className="patient-detail-row">
+            <div className="detail-item">
               <span className="detail-label">Gender</span>
               <span className="detail-value">{currentPatient.gender}</span>
             </div>
           </div>
 
-          {/* Medical Info - Vertical Layout */}
-          <div className="patient-medical-vertical">
-            <div className="medical-row-vertical">
-              <span className="medical-icon">⚠️</span>
-              <span className="medical-label">Allergies</span>
-              <span className="medical-value badge-danger-small">
-                {currentPatient.allergies?.length > 0 ? currentPatient.allergies.join(', ') : 'None'}
-              </span>
-            </div>
-            <div className="medical-row-vertical">
-              <span className="medical-icon">💊</span>
-              <span className="medical-label">Conditions</span>
-              <span className="medical-value badge-primary-small">
-                {currentPatient.conditions?.length > 0 ? currentPatient.conditions.join(', ') : 'None'}
-              </span>
-            </div>
-            <div className="medical-row-vertical">
-              <span className="medical-icon">📞</span>
-              <span className="medical-label">Phone</span>
-              <span className="medical-value">{currentPatient.phone || 'N/A'}</span>
-            </div>
-            <div className="medical-row-vertical">
-              <span className="medical-icon">🩺</span>
-              <span className="medical-label">Last Visit</span>
-              <span className="medical-value">{currentPatient.last_visit || 'N/A'}</span>
-            </div>
-          </div>
+          {/* Medical Info Chips */}
+<div className="medical-chips-premium">
+  <div className="chip-row">
+    <AlertTriangle className="chip-icon" size={16} strokeWidth={1.8} />
+    <span className="chip-label">Allergies</span>
+    <span>
+      {currentPatient.allergies?.length > 0 ? (
+        currentPatient.allergies.map((allergy, i) => (
+          <span key={i} className="chip-tag chip-tag-danger">{allergy}</span>
+        ))
+      ) : (
+        <span className="chip-tag chip-tag-neutral">None</span>
+      )}
+    </span>
+  </div>
+  <div className="chip-row">
+    <HeartPulse className="chip-icon" size={16} strokeWidth={1.8} />
+    <span className="chip-label">Conditions</span>
+    <span>
+      {currentPatient.conditions?.length > 0 ? (
+        currentPatient.conditions.map((condition, i) => (
+          <span key={i} className="chip-tag chip-tag-primary">{condition}</span>
+        ))
+      ) : (
+        <span className="chip-tag chip-tag-neutral">None</span>
+      )}
+    </span>
+  </div>
+  <div className="chip-row">
+    <Droplet className="chip-icon" size={16} strokeWidth={1.8} />
+    <span className="chip-label">Blood Group</span>
+    <span className="chip-value">{currentPatient.blood_group || <span className="chip-tag chip-tag-neutral">N/A</span>}</span>
+  </div>
+  <div className="chip-row">
+    <Phone className="chip-icon" size={16} strokeWidth={1.8} />
+    <span className="chip-label">Phone</span>
+    <span className="chip-value">{currentPatient.phone || 'N/A'}</span>
+  </div>
+  <div className="chip-row">
+    <Calendar className="chip-icon" size={16} strokeWidth={1.8} />
+    <span className="chip-label">Last Visit</span>
+    <span className="chip-value">{currentPatient.last_visit || 'N/A'}</span>
+  </div>
+</div>
+          {/* Stats Cards */}
+<div className="stats-cards-premium">
+  <div className="stat-card">
+    <div className="stat-icon-wrapper">
+      <FileText className="stat-icon" size={20} strokeWidth={1.8} />
+    </div>
+    <div className="stat-content">
+      <span className="stat-label">SOAP Notes</span>
+      <span className="stat-number">{documentCounts.soap}</span>
+    </div>
+  </div>
+  <div className="stat-card">
+    <div className="stat-icon-wrapper">
+      <Pill className="stat-icon" size={20} strokeWidth={1.8} />
+    </div>
+    <div className="stat-content">
+      <span className="stat-label">Prescriptions</span>
+      <span className="stat-number">{documentCounts.prescriptions}</span>
+    </div>
+  </div>
+  <div className="stat-card">
+    <div className="stat-icon-wrapper">
+      <Image className="stat-icon" size={20} strokeWidth={1.8} />
+    </div>
+    <div className="stat-content">
+      <span className="stat-label">Images</span>
+      <span className="stat-number">{documentCounts.images}</span>
+    </div>
+  </div>
+</div>
 
-          {/* Document Counters */}
-          <div className="document-counters">
-            <div className="doc-counter">
-              <span className="doc-icon">📄</span>
-              <span className="doc-label">SOAP Notes</span>
-              <span className="doc-count">{documentCounts.soap}</span>
-            </div>
-            <div className="doc-counter">
-              <span className="doc-icon">💊</span>
-              <span className="doc-label">Prescriptions</span>
-              <span className="doc-count">{documentCounts.prescriptions}</span>
-            </div>
-            <div className="doc-counter">
-              <span className="doc-icon">🖼️</span>
-              <span className="doc-label">Images</span>
-              <span className="doc-count">{documentCounts.images}</span>
-            </div>
-          </div>
-
-          {/* Bottom Actions - Same Row */}
-          <div className="patient-actions-row">
+          {/* Action Buttons */}
+          <div className="patient-actions-premium">
             <button 
-              className="clear-selection-btn-compact"
+              className="action-secondary"
               onClick={() => setCurrentPatient(null)}
             >
-              ✖ Clear
+              ✖ Clear Selection
             </button>
             {token && currentPatient && (
               <AnalyzeButton 
@@ -263,29 +346,47 @@ const PatientPanel = ({
         </div>
       ) : (
         /* ===== NO PATIENT SELECTED ===== */
-        <div className="no-patient-compact">
+        <div className="no-patient-premium">
           <span>👤</span>
           <p>No Patient Selected</p>
           <small>Search or add a patient above</small>
         </div>
       )}
 
-      {/* ===== APPOINTMENTS - FIXED HEIGHT WITH SCROLL ===== */}
-      <div className="appointments-card">
-        <div className="appointments-header">
+      {/* ===== APPOINTMENTS ===== */}
+      <div className="appointments-card-premium">
+        <div className="appointments-header-premium">
           <h4>📅 Upcoming Appointments</h4>
-          <span className="view-all">View all →</span>
+          <span className="view-all">View All →</span>
         </div>
-        <div className="appointments-scroll">
+
+        {/* Today's Summary */}
+        {todayAppointments.length > 0 && (
+          <div className="today-summary">
+            <span className="today-label">Today</span>
+            <span className="today-count">{todayAppointments.length} appointment{todayAppointments.length > 1 ? 's' : ''}</span>
+          </div>
+        )}
+
+        <div className="appointments-scroll-premium">
           {upcomingAppointments && upcomingAppointments.length > 0 ? (
-            upcomingAppointments.map((apt, idx) => (
-              <div key={idx} className="appointment-item">
-                <div className="appointment-name">{apt.patient_name}</div>
-                <div className="appointment-date">{getRelativeDate(apt.date)}</div>
-              </div>
-            ))
+            upcomingAppointments.map((apt, idx) => {
+              const isToday = new Date(apt.date).toDateString() === new Date().toDateString();
+              return (
+                <div key={idx} className="appointment-item-premium">
+                  <div className="appointment-time">{apt.time || '09:00'}</div>
+                  <div className="appointment-info">
+                    <div className="appointment-name">{apt.patient_name}</div>
+                    <div className="appointment-type">{apt.type || 'Follow-up'}</div>
+                  </div>
+                  <span className={`appointment-status ${apt.status === 'Confirmed' ? 'status-confirmed' : 'status-pending'}`}>
+                    {apt.status || 'Confirmed'}
+                  </span>
+                </div>
+              );
+            })
           ) : (
-            <div className="no-appointments">
+            <div className="no-appointments-premium">
               <div className="calendar-icon">📅</div>
               <div className="main-text">No upcoming appointments</div>
               <div className="sub-text">You're all caught up!</div>

@@ -107,19 +107,16 @@ const ChatPanel = ({
   const handleVoiceRecording = () => {
     setIsRecording(!isRecording);
     if (!isRecording) {
-      // Start recording logic
       setTimeout(() => {
         setInput('Voice recording in progress...');
       }, 500);
     } else {
-      // Stop recording logic
       setIsRecording(false);
     }
   };
 
   // Handle file attachment
   const handleAttachment = () => {
-    // Trigger file upload
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = '.pdf,.jpg,.png,.dicom';
