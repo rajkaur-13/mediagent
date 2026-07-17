@@ -13,8 +13,14 @@ const ClinicalPanel = ({
   onScheduleFollowUp
 }) => {
   const [activeTab, setActiveTab] = useState('soap');
-  const [expandedSection, setExpandedSection] = useState('subjective');
+  const [expandedSection, setExpandedSection] = useState(null);
   const [medications, setMedications] = useState([]);
+  const [soapStatus, setSoapStatus] = useState({
+    subjective: 'not_started',
+    objective: 'not_started',
+    assessment: 'not_started',
+    plan: 'not_started'
+  });
   const hasPatientSelected = currentPatient !== null;
 
   const getInitials = (name) => {
@@ -22,18 +28,100 @@ const ClinicalPanel = ({
     return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
   };
 
-  const toggleSection = (section) => {
-    setExpandedSection(expandedSection === section ? null : section);
+  // Get status label and color
+  const getStatusInfo = (status) => {
+    switch(status) {
+      case 'saved':
+        return { label: '✓ Saved', className: 'status-saved' };
+      case 'editing':
+        return { label: 'Editing', className: 'status-editing' };
+      case 'in_progress':
+        return { label: 'In Progress', className: 'status-in-progress' };
+      default:
+        return { label: 'Not Started', className: 'status-not-started' };
+    }
   };
 
-  const handleAIAction = (action) => {
-    if (!currentPatient) return;
-    const messages = {
-      soap: `Generate SOAP note for ${currentPatient.name}`,
-      prescription: `Generate prescription for ${currentPatient.name}`,
-      imaging: `Generate imaging report for ${currentPatient.name}`
+  // Get section color
+  const getSectionColor = (section) => {
+    const colors = {
+      subjective: '#2563EB',  // Blue
+      objective: '#06B6D4',   // Cyan
+      assessment: '#F59E0B',  // Orange
+      plan: '#22C55E'         // Green
     };
-    onAnalysisComplete?.({ formatted_response: messages[action] });
+    return colors[section] || '#2563EB';
+  };
+
+  // Get section letter
+  const getSectionLetter = (section) => {
+    const letters = {
+      subjective: 'S',
+      objective: 'O',
+      assessment: 'A',
+      plan: 'P'
+    };
+    return letters[section] || '?';
+  };
+
+  // Get section title
+  const getSectionTitle = (section) => {
+    const titles = {
+      subjective: 'Subjective',
+      objective: 'Objective',
+      assessment: 'Assessment',
+      plan: 'Plan'
+    };
+    return titles[section] || '';
+  };
+
+  // Get section subtitle
+  const getSectionSubtitle = (section) => {
+    const subtitles = {
+      subjective: "Patient's complaints & history",
+      objective: 'Vitals & examination',
+      assessment: 'Diagnosis & differential',
+      plan: 'Treatment & follow-up'
+    };
+    return subtitles[section] || '';
+  };
+
+  // Get section placeholder
+  const getSectionPlaceholder = (section) => {
+    const placeholders = {
+      subjective: "Write today's patient complaints and history...",
+      objective: "Write vitals, physical exam findings, test results...",
+      assessment: "Write diagnosis, differential diagnoses, clinical reasoning...",
+      plan: "Write treatment plan, medications, follow-up schedule..."
+    };
+    return placeholders[section] || '';
+  };
+
+  // Toggle section
+  const toggleSection = (section) => {
+    if (expandedSection === section) {
+      setExpandedSection(null);
+    } else {
+      setExpandedSection(section);
+      // If section is not started, mark as in progress
+      if (soapStatus[section] === 'not_started') {
+        setSoapStatus({ ...soapStatus, [section]: 'in_progress' });
+      } else if (soapStatus[section] === 'saved') {
+        setSoapStatus({ ...soapStatus, [section]: 'editing' });
+      }
+    }
+  };
+
+  // Save section
+  const handleSaveSection = (section) => {
+    // Save to database
+    handleSaveSoapNote();
+    
+    // Update status
+    setSoapStatus({ ...soapStatus, [section]: 'saved' });
+    
+    // Auto-collapse after save
+    setExpandedSection(null);
   };
 
   const handleAddMedication = () => {
@@ -50,6 +138,8 @@ const ClinicalPanel = ({
     setMedications(medications.filter(m => m.id !== id));
   };
 
+  const soapSections = ['subjective', 'objective', 'assessment', 'plan'];
+
   return (
     <div className="panel panel-tools">
       {/* ===== HEADER ===== */}
@@ -59,7 +149,7 @@ const ClinicalPanel = ({
             <span className="clinical-header-icon">📝</span>
             <div>
               <h2>Clinical Documentation</h2>
-              <p>AI-assisted SOAP Notes • Prescriptions • Medical Imaging</p>
+              <p>SOAP Notes • Prescriptions • Medical Imaging</p>
             </div>
           </div>
         </div>
@@ -125,7 +215,7 @@ const ClinicalPanel = ({
         </button>
       </div>
 
-      {/* ===== CONTENT ===== */}
+      {/* ===== CONTENT - SCROLLABLE ===== */}
       <div className="clinical-content">
         {!hasPatientSelected ? (
           <div className="empty-state-premium">
@@ -138,110 +228,73 @@ const ClinicalPanel = ({
             {/* SOAP TAB */}
             {activeTab === 'soap' && (
               <div className="soap-container">
-                <div className="soap-accordion">
-                  <div className="soap-accordion-header" onClick={() => toggleSection('subjective')}>
-                    <div className="soap-accordion-title">
-                      <span className="accordion-icon">🩺</span>
-                      <span>Subjective</span>
-                      <span className="accordion-subtitle">Patient's complaints & history</span>
-                    </div>
-                    <div className="soap-accordion-actions">
-                      <button className="ai-suggest-compact" onClick={(e) => {
-                        e.stopPropagation();
-                        onAnalysisComplete?.({ formatted_response: `Suggest subjective for ${currentPatient.name}` });
-                      }}>
-                        ✨ Generate with AI
-                      </button>
-                      <span className="accordion-arrow">{expandedSection === 'subjective' ? '▼' : '▶'}</span>
-                    </div>
-                  </div>
-                  {expandedSection === 'subjective' && (
-                    <div className="soap-accordion-content">
-                      <textarea className="soap-textarea-premium" placeholder="Patient's symptoms, history, and chief complaints..." value={soapNote.subjective || ''} onChange={(e) => setSoapNote({...soapNote, subjective: e.target.value})} rows="4" maxLength="1000" />
-                      <div className="character-counter">{soapNote.subjective?.length || 0}/1000 characters</div>
-                    </div>
-                  )}
-                </div>
+                {soapSections.map((section) => {
+                  const status = getStatusInfo(soapStatus[section]);
+                  const color = getSectionColor(section);
+                  const letter = getSectionLetter(section);
+                  const title = getSectionTitle(section);
+                  const subtitle = getSectionSubtitle(section);
+                  const placeholder = getSectionPlaceholder(section);
+                  const isExpanded = expandedSection === section;
+                  const noteValue = soapNote[section] || '';
 
-                <div className="soap-accordion">
-                  <div className="soap-accordion-header" onClick={() => toggleSection('objective')}>
-                    <div className="soap-accordion-title">
-                      <span className="accordion-icon">❤️</span>
-                      <span>Objective</span>
-                      <span className="accordion-subtitle">Vitals & examination</span>
-                    </div>
-                    <div className="soap-accordion-actions">
-                      <button className="ai-suggest-compact" onClick={(e) => {
-                        e.stopPropagation();
-                        onAnalysisComplete?.({ formatted_response: `Suggest objective for ${currentPatient.name}` });
-                      }}>
-                        ✨ Generate with AI
-                      </button>
-                      <span className="accordion-arrow">{expandedSection === 'objective' ? '▼' : '▶'}</span>
-                    </div>
-                  </div>
-                  {expandedSection === 'objective' && (
-                    <div className="soap-accordion-content">
-                      <textarea className="soap-textarea-premium" placeholder="Vitals, physical exam findings, test results..." value={soapNote.objective || ''} onChange={(e) => setSoapNote({...soapNote, objective: e.target.value})} rows="4" maxLength="1000" />
-                      <div className="character-counter">{soapNote.objective?.length || 0}/1000 characters</div>
-                    </div>
-                  )}
-                </div>
+                  return (
+                    <div 
+                      key={section}
+                      className={`soap-card ${isExpanded ? 'expanded' : 'collapsed'}`}
+                      style={{ borderLeftColor: color }}
+                    >
+                      {/* Card Header - Clickable */}
+                      <div 
+                        className="soap-card-header"
+                        onClick={() => toggleSection(section)}
+                      >
+                        <div className="soap-card-left">
+                          <span className="soap-card-letter" style={{ color: color }}>
+                            {letter}
+                          </span>
+                          <div className="soap-card-info">
+                            <span className="soap-card-title">{title}</span>
+                            <span className="soap-card-subtitle">{subtitle}</span>
+                          </div>
+                        </div>
+                        <div className="soap-card-right">
+                          <span className={`soap-card-status ${status.className}`}>
+                            {status.label}
+                          </span>
+                          <span className="soap-card-chevron">
+                            {isExpanded ? '▼' : '▶'}
+                          </span>
+                        </div>
+                      </div>
 
-                <div className="soap-accordion">
-                  <div className="soap-accordion-header" onClick={() => toggleSection('assessment')}>
-                    <div className="soap-accordion-title">
-                      <span className="accordion-icon">🧠</span>
-                      <span>Assessment</span>
-                      <span className="accordion-subtitle">Diagnosis & differential</span>
+                      {/* Card Content - Expandable */}
+                      {isExpanded && (
+                        <div className="soap-card-content">
+                          <textarea
+                            className="soap-textarea-premium"
+                            placeholder={placeholder}
+                            value={noteValue}
+                            onChange={(e) => setSoapNote({...soapNote, [section]: e.target.value})}
+                            rows="4"
+                            maxLength="1000"
+                          />
+                          <div className="soap-card-actions">
+                            <span className="character-counter">
+                              {noteValue.length}/1000 characters
+                            </span>
+                            <button 
+                              className="soap-save-btn"
+                              onClick={() => handleSaveSection(section)}
+                            >
+                              Save {title}
+                            </button>
+                          </div>
+                        </div>
+                      )}
                     </div>
-                    <div className="soap-accordion-actions">
-                      <button className="ai-suggest-compact" onClick={(e) => {
-                        e.stopPropagation();
-                        onAnalysisComplete?.({ formatted_response: `Suggest assessment for ${currentPatient.name}` });
-                      }}>
-                        ✨ Generate with AI
-                      </button>
-                      <span className="accordion-arrow">{expandedSection === 'assessment' ? '▼' : '▶'}</span>
-                    </div>
-                  </div>
-                  {expandedSection === 'assessment' && (
-                    <div className="soap-accordion-content">
-                      <textarea className="soap-textarea-premium" placeholder="Diagnosis, differential diagnoses, clinical reasoning..." value={soapNote.assessment || ''} onChange={(e) => setSoapNote({...soapNote, assessment: e.target.value})} rows="4" maxLength="1000" />
-                      <div className="character-counter">{soapNote.assessment?.length || 0}/1000 characters</div>
-                    </div>
-                  )}
-                </div>
-
-                <div className="soap-accordion">
-                  <div className="soap-accordion-header" onClick={() => toggleSection('plan')}>
-                    <div className="soap-accordion-title">
-                      <span className="accordion-icon">📋</span>
-                      <span>Plan</span>
-                      <span className="accordion-subtitle">Treatment & follow-up</span>
-                    </div>
-                    <div className="soap-accordion-actions">
-                      <button className="ai-suggest-compact" onClick={(e) => {
-                        e.stopPropagation();
-                        onAnalysisComplete?.({ formatted_response: `Suggest plan for ${currentPatient.name}` });
-                      }}>
-                        ✨ Generate with AI
-                      </button>
-                      <span className="accordion-arrow">{expandedSection === 'plan' ? '▼' : '▶'}</span>
-                    </div>
-                  </div>
-                  {expandedSection === 'plan' && (
-                    <div className="soap-accordion-content">
-                      <textarea className="soap-textarea-premium" placeholder="Treatment plan, medications, follow-up schedule, referrals..." value={soapNote.plan || ''} onChange={(e) => setSoapNote({...soapNote, plan: e.target.value})} rows="4" maxLength="1000" />
-                      <div className="character-counter">{soapNote.plan?.length || 0}/1000 characters</div>
-                    </div>
-                  )}
-                </div>
-
-                <div className="soap-action-bar">
-                  <button className="soap-action-secondary" onClick={() => setSoapNote({ subjective: '', objective: '', assessment: '', plan: '' })}>Start Writing</button>
-                  <button className="soap-action-primary" onClick={() => handleAIAction('soap')}>✨ Generate SOAP with AI</button>
-                </div>
+                  );
+                })}
               </div>
             )}
 
@@ -284,11 +337,6 @@ const ClinicalPanel = ({
                   <label>📝 Special Instructions</label>
                   <textarea className="soap-textarea-premium" placeholder="Additional instructions for the patient..." value={prescription?.instructions || ''} onChange={(e) => setPrescription({...prescription, instructions: e.target.value})} rows="2" />
                 </div>
-
-                <div className="prescription-action-bar">
-                  <button className="prescription-action-secondary">Save Draft</button>
-                  <button className="prescription-action-primary" onClick={() => handleAIAction('prescription')}>✨ Generate AI Prescription</button>
-                </div>
               </div>
             )}
 
@@ -302,17 +350,41 @@ const ClinicalPanel = ({
                   <span className="imaging-supported">X-ray • CT • MRI • ECG • Retinal</span>
                   <span className="imaging-formats">DICOM • PNG • JPG • PDF</span>
                 </div>
-                <div className="imaging-action-bar">
-                  <span className="imaging-action-label">AI Imaging Report</span>
-                  <button className="imaging-action-primary" onClick={() => handleAIAction('imaging')}>✨ Generate Report</button>
-                </div>
               </div>
             )}
           </>
         )}
       </div>
 
-      {/* ===== QUICK ACTIONS ===== */}
+      {/* ===== PRESCRIPTION ACTION BAR - MOVED OUTSIDE CONTENT (FIXED) ===== */}
+      {hasPatientSelected && activeTab === 'rx' && (
+        <div className="prescription-action-bar">
+          <button className="prescription-action-secondary">Save Draft</button>
+          <button className="prescription-action-primary" onClick={() => {
+            if (currentPatient) {
+              onAnalysisComplete?.({ formatted_response: `Generate prescription for ${currentPatient.name}` });
+            }
+          }}>
+            ✨ Generate AI Prescription
+          </button>
+        </div>
+      )}
+
+      {/* ===== IMAGING ACTION BAR - MOVED OUTSIDE CONTENT (FIXED) ===== */}
+      {hasPatientSelected && activeTab === 'imaging' && (
+        <div className="imaging-action-bar">
+          <span className="imaging-action-label">AI Imaging Report</span>
+          <button className="imaging-action-primary" onClick={() => {
+            if (currentPatient) {
+              onAnalysisComplete?.({ formatted_response: `Generate imaging report for ${currentPatient.name}` });
+            }
+          }}>
+            ✨ Generate Report
+          </button>
+        </div>
+      )}
+
+      {/* ===== QUICK ACTIONS - MOVED OUTSIDE CONTENT (FIXED) ===== */}
       <div className="quick-actions-compact">
         <button className={`quick-chip ${activeTab === 'soap' ? 'active' : ''}`} onClick={() => setActiveTab('soap')} disabled={!hasPatientSelected}>📝 SOAP</button>
         <button className={`quick-chip ${activeTab === 'rx' ? 'active' : ''}`} onClick={() => setActiveTab('rx')} disabled={!hasPatientSelected}>💊 Prescription</button>
@@ -320,7 +392,7 @@ const ClinicalPanel = ({
         <button className="quick-chip" onClick={() => onScheduleFollowUp?.(currentPatient)} disabled={!hasPatientSelected}>📅 Schedule</button>
       </div>
 
-      {/* ===== FOOTER ===== */}
+      {/* ===== FOOTER - MOVED OUTSIDE CONTENT (FIXED) ===== */}
       <div className="clinical-footer-compact">
         <span>Last saved: Just now</span>
         <span>•</span>

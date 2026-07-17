@@ -647,24 +647,34 @@
 }
 
 /* ----- Prescription Action Bar ----- */
+
 .prescription-action-bar {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 8px;
-  padding-top: 8px;
+  gap: 4px;
+  padding: 4px 0 2px 0;
   border-top: 1px solid #F1F5F9;
+  margin-top: 2px;
+  flex-shrink: 0;
+  background: inherit;
+  backdrop-filter: inherit;
 }
 
 .prescription-action-secondary {
-  padding: 8px 16px;
+  padding: 4px 8px;
   background: transparent;
   border: 1.5px solid #E5E7EB;
-  border-radius: 10px;
-  font-size: 12px;
+  border-radius: 6px;
+  font-size: 10px;
   font-weight: 500;
   color: #64748B;
   cursor: pointer;
   transition: all 0.2s ease;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
 }
 
 .prescription-action-secondary:hover {
@@ -673,21 +683,26 @@
 }
 
 .prescription-action-primary {
-  padding: 8px 16px;
+  padding: 4px 8px;
   background: linear-gradient(135deg, #2563EB, #7C3AED);
   color: white;
   border: none;
-  border-radius: 10px;
-  font-size: 12px;
+  border-radius: 6px;
+  font-size: 10px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
-  box-shadow: 0 3px 12px rgba(37, 99, 235, 0.2);
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.2);
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
 }
 
 .prescription-action-primary:hover {
   transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.3);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
 }
 
 /* ========================================
@@ -880,4 +895,190 @@
 /* Hide old quick actions */
 .quick-actions {
   display: none;
+}
+
+/* ========================================
+   SOAP CARDS - NEW COMPACT DESIGN
+   ======================================== */
+
+.soap-card {
+  background: #FFFFFF;
+  border: 1px solid #F1F5F9;
+  border-radius: 10px;
+  border-left: 4px solid transparent;
+  overflow: hidden;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.soap-card:hover {
+  border-color: #E5E7EB;
+}
+
+.soap-card.collapsed {
+  height: 76px;
+}
+
+.soap-card.expanded {
+  min-height: 200px;
+}
+
+/* ----- Card Header ----- */
+.soap-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  height: 76px;
+}
+
+.soap-card-header:hover {
+  background: #F8FAFC;
+}
+
+.soap-card-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+}
+
+.soap-card-letter {
+  font-size: 22px;
+  font-weight: 700;
+  width: 28px;
+  flex-shrink: 0;
+  text-align: center;
+}
+
+.soap-card-info {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  flex: 1;
+  min-width: 0;
+}
+
+.soap-card-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #0F172A;
+}
+
+.soap-card-subtitle {
+  font-size: 11px;
+  color: #94A3B8;
+}
+
+.soap-card-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+/* ----- Status Badges ----- */
+.soap-card-status {
+  font-size: 10px;
+  font-weight: 500;
+  padding: 2px 10px;
+  border-radius: 10px;
+  white-space: nowrap;
+}
+
+.status-saved {
+  background: #F0FDF4;
+  color: #22C55E;
+}
+
+.status-editing {
+  background: #EFF6FF;
+  color: #2563EB;
+}
+
+.status-in-progress {
+  background: #EFF6FF;
+  color: #2563EB;
+}
+
+.status-not-started {
+  background: #F1F5F9;
+  color: #94A3B8;
+}
+
+.soap-card-chevron {
+  font-size: 10px;
+  color: #94A3B8;
+  transition: transform 0.2s ease;
+}
+
+.soap-card.expanded .soap-card-chevron {
+  transform: rotate(180deg);
+}
+
+/* ----- Card Content (Expanded) ----- */
+.soap-card-content {
+  padding: 0 16px 16px 16px;
+  animation: accordionOpen 0.25s ease;
+}
+
+.soap-card-content .soap-textarea-premium {
+  min-height: 100px;
+  font-size: 14px;
+}
+
+.soap-card-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 8px;
+}
+
+.soap-card-actions .character-counter {
+  font-size: 10px;
+  color: #94A3B8;
+  margin: 0;
+}
+
+.soap-save-btn {
+  padding: 6px 16px;
+  background: #2563EB;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.soap-save-btn:hover {
+  background: #1D4ED8;
+  transform: translateY(-1px);
+}
+
+.soap-save-btn:active {
+  transform: translateY(0px);
+}
+
+/* ----- Remove Old SOAP Styles ----- */
+.soap-accordion,
+.soap-accordion-header,
+.soap-accordion-title,
+.soap-accordion-actions,
+.ai-suggest-compact,
+.soap-action-bar,
+.soap-action-secondary,
+.soap-action-primary {
+  display: none !important;
+}
+
+.soap-container {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-bottom: 4px;
 }
