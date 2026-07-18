@@ -103,7 +103,6 @@ const ClinicalPanel = ({
       setExpandedSection(null);
     } else {
       setExpandedSection(section);
-      // If section is not started, mark as in progress
       if (soapStatus[section] === 'not_started') {
         setSoapStatus({ ...soapStatus, [section]: 'in_progress' });
       } else if (soapStatus[section] === 'saved') {
@@ -114,13 +113,8 @@ const ClinicalPanel = ({
 
   // Save section
   const handleSaveSection = (section) => {
-    // Save to database
     handleSaveSoapNote();
-    
-    // Update status
     setSoapStatus({ ...soapStatus, [section]: 'saved' });
-    
-    // Auto-collapse after save
     setExpandedSection(null);
   };
 
@@ -129,6 +123,7 @@ const ClinicalPanel = ({
       id: Date.now(), 
       name: '', 
       dosage: '', 
+      route: '',
       frequency: '', 
       duration: '' 
     }]);
@@ -244,7 +239,6 @@ const ClinicalPanel = ({
                       className={`soap-card ${isExpanded ? 'expanded' : 'collapsed'}`}
                       style={{ borderLeftColor: color }}
                     >
-                      {/* Card Header - Clickable */}
                       <div 
                         className="soap-card-header"
                         onClick={() => toggleSection(section)}
@@ -268,7 +262,6 @@ const ClinicalPanel = ({
                         </div>
                       </div>
 
-                      {/* Card Content - Expandable */}
                       {isExpanded && (
                         <div className="soap-card-content">
                           <textarea
@@ -302,7 +295,10 @@ const ClinicalPanel = ({
             {activeTab === 'rx' && (
               <div className="prescription-container">
                 <div className="prescription-header">
-                  <h4>💊 Prescription</h4>
+                  <div className="prescription-header-left">
+                    <h4>Medication Orders</h4>
+                    <span className="prescription-subtitle">Manage medications prescribed during this consultation.</span>
+                  </div>
                   <button className="add-medication-btn" onClick={handleAddMedication}>+ Add Medication</button>
                 </div>
 
@@ -315,19 +311,84 @@ const ClinicalPanel = ({
                 ) : (
                   <div className="medication-table">
                     <div className="medication-table-header">
-                      <span>Medication</span><span>Dosage</span><span>Frequency</span><span>Duration</span><span></span>
+                      <span>Med</span>
+                      <span>Dosage</span>
+                      <span>Route</span>
+                      <span>Freq</span>
+                      <span>Dur</span>
+                      <span></span>
                     </div>
                     {medications.map((med) => (
                       <div key={med.id} className="medication-table-row">
-                        <input className="med-input" placeholder="e.g., Amoxicillin" value={med.name || ''} onChange={(e) => { const updated = medications.map(m => m.id === med.id ? {...m, name: e.target.value} : m); setMedications(updated); }} />
-                        <input className="med-input" placeholder="500mg" value={med.dosage || ''} onChange={(e) => { const updated = medications.map(m => m.id === med.id ? {...m, dosage: e.target.value} : m); setMedications(updated); }} />
-                        <select className="med-select" value={med.frequency || ''} onChange={(e) => { const updated = medications.map(m => m.id === med.id ? {...m, frequency: e.target.value} : m); setMedications(updated); }}>
+                        <input 
+                          className="med-input" 
+                          placeholder="e.g., Amoxicillin" 
+                          value={med.name || ''} 
+                          onChange={(e) => { 
+                            const updated = medications.map(m => m.id === med.id ? {...m, name: e.target.value} : m); 
+                            setMedications(updated); 
+                          }} 
+                        />
+                        <input 
+                          className="med-input" 
+                          placeholder="500mg" 
+                          value={med.dosage || ''} 
+                          onChange={(e) => { 
+                            const updated = medications.map(m => m.id === med.id ? {...m, dosage: e.target.value} : m); 
+                            setMedications(updated); 
+                          }} 
+                        />
+                        <select 
+                          className="med-select" 
+                          value={med.route || ''} 
+                          onChange={(e) => { 
+                            const updated = medications.map(m => m.id === med.id ? {...m, route: e.target.value} : m); 
+                            setMedications(updated); 
+                          }}
+                        >
                           <option value="">Select</option>
-                          <option>Once daily</option><option>Twice daily</option><option>Three times daily</option>
-                          <option>Every 4 hours</option><option>Every 6 hours</option><option>As needed</option>
+                          <option value="Oral">Oral</option>
+                          <option value="IV">IV</option>
+                          <option value="IM">IM</option>
+                          <option value="SC">SC</option>
+                          <option value="Topical">Topical</option>
+                          <option value="Eye">Eye</option>
+                          <option value="Ear">Ear</option>
+                          <option value="Nasal">Nasal</option>
+                          <option value="Inhalation">Inhalation</option>
                         </select>
-                        <input className="med-input" placeholder="7 days" value={med.duration || ''} onChange={(e) => { const updated = medications.map(m => m.id === med.id ? {...m, duration: e.target.value} : m); setMedications(updated); }} />
-                        <button className="med-remove-btn" onClick={() => handleRemoveMedication(med.id)}>✕</button>
+                        <select 
+                          className="med-select" 
+                          value={med.frequency || ''} 
+                          onChange={(e) => { 
+                            const updated = medications.map(m => m.id === med.id ? {...m, frequency: e.target.value} : m); 
+                            setMedications(updated); 
+                          }}
+                        >
+                          <option value="">Select</option>
+                          <option value="OD">OD</option>
+                          <option value="BD">BD</option>
+                          <option value="TDS">TDS</option>
+                          <option value="QID">QID</option>
+                          <option value="SOS">SOS</option>
+                          <option value="Weekly">Weekly</option>
+                          <option value="Custom">Custom</option>
+                        </select>
+                        <input 
+                          className="med-input" 
+                          placeholder="7 days" 
+                          value={med.duration || ''} 
+                          onChange={(e) => { 
+                            const updated = medications.map(m => m.id === med.id ? {...m, duration: e.target.value} : m); 
+                            setMedications(updated); 
+                          }} 
+                        />
+                        <button 
+                          className="med-remove-btn" 
+                          onClick={() => handleRemoveMedication(med.id)}
+                        >
+                          ✕
+                        </button>
                       </div>
                     ))}
                   </div>
@@ -335,7 +396,13 @@ const ClinicalPanel = ({
 
                 <div className="special-instructions">
                   <label>📝 Special Instructions</label>
-                  <textarea className="soap-textarea-premium" placeholder="Additional instructions for the patient..." value={prescription?.instructions || ''} onChange={(e) => setPrescription({...prescription, instructions: e.target.value})} rows="2" />
+                  <textarea 
+                    className="soap-textarea-premium" 
+                    placeholder="e.g., Take after meals, Avoid alcohol, Return if fever persists"
+                    value={prescription?.instructions || ''} 
+                    onChange={(e) => setPrescription({...prescription, instructions: e.target.value})} 
+                    rows="2" 
+                  />
                 </div>
               </div>
             )}
@@ -356,21 +423,16 @@ const ClinicalPanel = ({
         )}
       </div>
 
-      {/* ===== PRESCRIPTION ACTION BAR - MOVED OUTSIDE CONTENT (FIXED) ===== */}
+      {/* ===== PRESCRIPTION SAVE BUTTON ===== */}
       {hasPatientSelected && activeTab === 'rx' && (
-        <div className="prescription-action-bar">
-          <button className="prescription-action-secondary">Save Draft</button>
-          <button className="prescription-action-primary" onClick={() => {
-            if (currentPatient) {
-              onAnalysisComplete?.({ formatted_response: `Generate prescription for ${currentPatient.name}` });
-            }
-          }}>
-            ✨ Generate AI Prescription
+        <div className="prescription-save-wrapper">
+          <button className="prescription-save-btn" onClick={handleGeneratePrescription}>
+            💾 Save Prescription
           </button>
         </div>
       )}
 
-      {/* ===== IMAGING ACTION BAR - MOVED OUTSIDE CONTENT (FIXED) ===== */}
+      {/* ===== IMAGING ACTION BAR ===== */}
       {hasPatientSelected && activeTab === 'imaging' && (
         <div className="imaging-action-bar">
           <span className="imaging-action-label">AI Imaging Report</span>
@@ -384,7 +446,7 @@ const ClinicalPanel = ({
         </div>
       )}
 
-      {/* ===== QUICK ACTIONS - MOVED OUTSIDE CONTENT (FIXED) ===== */}
+      {/* ===== QUICK ACTIONS ===== */}
       <div className="quick-actions-compact">
         <button className={`quick-chip ${activeTab === 'soap' ? 'active' : ''}`} onClick={() => setActiveTab('soap')} disabled={!hasPatientSelected}>📝 SOAP</button>
         <button className={`quick-chip ${activeTab === 'rx' ? 'active' : ''}`} onClick={() => setActiveTab('rx')} disabled={!hasPatientSelected}>💊 Prescription</button>
@@ -392,7 +454,7 @@ const ClinicalPanel = ({
         <button className="quick-chip" onClick={() => onScheduleFollowUp?.(currentPatient)} disabled={!hasPatientSelected}>📅 Schedule</button>
       </div>
 
-      {/* ===== FOOTER - MOVED OUTSIDE CONTENT (FIXED) ===== */}
+      {/* ===== FOOTER ===== */}
       <div className="clinical-footer-compact">
         <span>Last saved: Just now</span>
         <span>•</span>
