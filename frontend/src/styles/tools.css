@@ -654,28 +654,28 @@
    PRESCRIPTION SAVE BUTTON
    ======================================== */
 .prescription-save-wrapper {
-  display: flex;
-  justify-content: flex-end;
-  padding: 6px 0 2px 0;
   border-top: 1px solid #F1F5F9;
-  margin-top: 4px;
+  display: flex;
   flex-shrink: 0;
+  justify-content: flex-end;
+  margin-top: 2px;
+  padding: 2px 0;
 }
 
 .prescription-save-btn {
-  padding: 6px 16px;
-  background: #2563EB;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-size: 12px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  display: flex;
   align-items: center;
-  gap: 6px;
-  height: 32px;
+  background: #2563EB;
+  border: none;
+  border-radius: 4px;
+  color: white;
+  cursor: pointer;
+  display: flex;
+  font-size: 10px;
+  font-weight: 500;
+  gap: 4px;
+  height: 24px;
+  padding: 2px 10px;
+  transition: all 0.2s ease;
 }
 
 .prescription-save-btn:hover {
@@ -688,129 +688,539 @@
   transform: translateY(0px);
 }
 
-
-
-
 /* ========================================
-   IMAGING
+   IMAGING TAB - OPTIMIZED FOR SPACE
    ======================================== */
-.imaging-container {
+
+.imaging-tab-container {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 6px;
+  height: 100%;
+  padding-bottom: 2px;
+  flex: 1;
+  min-height: 0;
 }
 
-.imaging-upload-area {
+/* ----- 1. Top Row (40px max) ----- */
+.imaging-top-row {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  padding: 24px 16px;
-  border: 2px dashed #E5E7EB;
-  border-radius: 12px;
-  background: #FAFBFC;
-  text-align: center;
-  transition: all 0.2s ease;
+  gap: 8px;
+  width: 100%;
 }
 
-.imaging-upload-area:hover {
-  border-color: #2563EB;
+.imaging-type-chips {
+  display: flex;
+  gap: 4px;
+  overflow-x: visible;
+  flex: 1;
+  scrollbar-width: none;
+  padding: 2px 0;
+  align-items: center;
+}
+
+.imaging-type-chips::-webkit-scrollbar {
+  display: none;
+}
+
+.imaging-chip {
+  padding: 4px 12px;
+  border: 1px solid #E5E7EB;
+  border-radius: 14px;
+  font-size: 11px;
+  font-weight: 500;
+  color: #64748B;
+  background: #FFFFFF;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+  height: 28px;
+}
+
+.imaging-chip:hover {
+  border-color: #94A3B8;
   background: #F8FAFC;
 }
 
-.imaging-upload-icon {
-  font-size: 32px;
-  margin-bottom: 8px;
-  opacity: 0.6;
+.imaging-chip.active {
+  border-color: #2563EB;
+  background: #EFF6FF;
+  color: #2563EB;
 }
 
-.imaging-upload-area h4 {
-  font-size: 14px;
+.imaging-upload-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 12px;
+  background: #2563EB;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  height: 30px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.imaging-upload-btn:hover {
+  background: #1D4ED8;
+}
+
+.imaging-upload-btn .upload-icon {
+  font-size: 13px;
+}
+
+/* ----- Dropdown for More Types ----- */
+.imaging-chip-dropdown {
+  position: relative;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.imaging-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  background: #FFFFFF;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  min-width: 130px;
+  z-index: 9999;
+  padding: 4px;
+  animation: dropdownFadeIn 0.15s ease;
+  right: 0;
+}
+
+@keyframes dropdownFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.imaging-dropdown-item {
+  display: block;
+  width: 100%;
+  padding: 6px 12px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  font-size: 12px;
+  font-weight: 400;
+  color: #0F172A;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s ease;
+}
+
+.imaging-dropdown-item:hover {
+  background: #F8FAFC;
+}
+
+/* ----- Outline Upload Button (Enterprise Style) ----- */
+.imaging-upload-btn-outline {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 14px;
+  background: #FFFFFF;
+  border: 1.5px solid #2563EB;
+  border-radius: 8px;
+  color: #2563EB;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+  height: 28px;
+  flex-shrink: 0;
+}
+
+.imaging-upload-btn-outline:hover {
+  background: #F0F7FF;
+  border-color: #1D4ED8;
+  color: #1D4ED8;
+}
+
+.imaging-upload-btn-outline:active {
+  background: #E0EDFF;
+  transform: scale(0.98);
+}
+
+.imaging-upload-btn-outline .upload-icon {
+  font-size: 13px;
+  color: #2563EB;
+}
+
+.imaging-upload-btn-outline:hover .upload-icon {
+  color: #1D4ED8;
+}
+
+/* ----- 2. Studies Strip (70px max) ----- */
+.imaging-studies-strip {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 4px 0;
+  flex-shrink: 0;
+  min-height: 62px;
+  max-height: 70px;
+  scrollbar-width: thin;
+}
+
+.imaging-studies-strip::-webkit-scrollbar {
+  height: 3px;
+}
+
+.imaging-studies-strip::-webkit-scrollbar-thumb {
+  background: #E5E7EB;
+  border-radius: 10px;
+}
+
+.imaging-study-card {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 140px;
+  max-width: 170px;
+  padding: 4px 10px 4px 6px;
+  background: #FFFFFF;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  height: 56px;
+}
+
+.imaging-study-card:hover {
+  border-color: #94A3B8;
+}
+
+.imaging-study-card.selected {
+  border-color: #2563EB;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+}
+
+.study-thumbnail {
+  width: 40px;
+  height: 40px;
+  border-radius: 6px;
+  background: #F8FAFC;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.study-thumbnail img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.study-placeholder {
+  font-size: 20px;
+  opacity: 0.5;
+}
+
+.study-info {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  flex: 1;
+  min-width: 0;
+}
+
+.study-name {
+  font-size: 11px;
+  font-weight: 500;
+  color: #0F172A;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.study-status {
+  font-size: 8px;
+  font-weight: 500;
+  padding: 1px 8px;
+  border-radius: 8px;
+  display: inline-block;
+  width: fit-content;
+}
+
+.study-status.pending {
+  background: #FEFCE8;
+  color: #EAB308;
+}
+
+.study-status.saved {
+  background: #F0FDF4;
+  color: #22C55E;
+}
+
+.study-status.ai-draft {
+  background: #EFF6FF;
+  color: #2563EB;
+}
+
+/* ----- 3. Report Area (gets remaining space) ----- */
+.imaging-report-area {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  gap: 4px;
+}
+
+.imaging-report-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.imaging-report-title {
+  font-size: 12px;
   font-weight: 600;
   color: #0F172A;
-  margin: 0;
 }
 
-.imaging-upload-area p {
-  font-size: 12px;
-  color: #94A3B8;
-  margin: 2px 0;
-}
-
-.imaging-supported {
+.imaging-ai-compact {
+  padding: 4px 12px;
+  background: linear-gradient(135deg, #2563EB, #7C3AED);
+  color: white;
+  border: none;
+  border-radius: 6px;
   font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.imaging-ai-compact:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+}
+
+.imaging-ai-compact:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ----- Report Grid ----- */
+.imaging-report-grid {
+  display: grid;
+  grid-template-columns: 1fr 2.2fr;
+  gap: 8px;
+  flex: 1;
+  min-height: 0;
+  height: 100%;
+}
+
+/* Left: Preview */
+.imaging-preview {
+  display: flex;
+  flex-direction: column;
+  background: #F8FAFC;
+  border-radius: 8px;
+  border: 1px solid #E5E7EB;
+  padding: 8px;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  height: 100%;
+}
+
+.imaging-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  max-height: 100%;
+}
+
+.preview-placeholder {
+  font-size: 48px;
+  opacity: 0.3;
+  color: #94A3B8;
+}
+
+/* Right: Text Fields */
+.imaging-text-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+  min-height: 0;
+}
+
+.imaging-field {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  flex: 1;
+}
+
+.imaging-field label {
+  font-size: 9px;
+  font-weight: 500;
+  color: #64748B;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.imaging-textarea {
+  width: 100%;
+  padding: 4px 8px;
+  border: 1px solid #E5E7EB;
+  border-radius: 6px;
+  font-size: 11px;
+  font-family: inherit;
+  color: #0F172A;
+  background: #FFFFFF;
+  transition: all 0.15s ease;
+  resize: vertical;
+  min-height: 40px;
+  flex: 1;
+  line-height: 1.4;
+}
+
+.imaging-textarea:focus {
+  outline: none;
+  border-color: #2563EB;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.08);
+}
+
+.imaging-textarea::placeholder {
+  color: #94A3B8;
+}
+
+/* ----- No Study ----- */
+.imaging-no-study {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  background: #FAFBFC;
+  border-radius: 8px;
+  border: 1px dashed #E5E7EB;
+  min-height: 100px;
+}
+
+.imaging-no-study span {
+  font-size: 28px;
+  opacity: 0.4;
+  color: #94A3B8;
+}
+
+.imaging-no-study p {
+  font-size: 12px;
   color: #94A3B8;
   margin-top: 4px;
 }
 
-.imaging-formats {
-  font-size: 10px;
-  color: #CBD5E1;
-  margin-top: 2px;
-}
-
-/* ----- Imaging Action Bar ----- */
-.imaging-action-bar {
+/* ----- Empty State ----- */
+.imaging-empty-state {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding: 10px 14px;
-  background: #F8FAFC;
-  border-radius: 10px;
-  border: 1px solid #F1F5F9;
+  justify-content: center;
+  width: 100%;
+  padding: 8px 16px;
+  background: #FAFBFC;
+  border-radius: 8px;
+  border: 1px dashed #E5E7EB;
+  gap: 8px;
 }
 
-.imaging-action-label {
-  font-size: 13px;
-  font-weight: 500;
-  color: #0F172A;
+.imaging-empty-state .empty-icon {
+  font-size: 20px;
+  opacity: 0.5;
+  color: #94A3B8;
 }
 
-.imaging-action-primary {
-  padding: 8px 18px;
-  background: linear-gradient(135deg, #2563EB, #7C3AED);
+.imaging-empty-state p {
+  font-size: 12px;
+  color: #94A3B8;
+  margin: 0;
+}
+
+/* ----- 4. Save Button (Sticky) ----- */
+.imaging-save-btn {
+  width: 100%;
+  padding: 3px 8px;
+  background: #2563EB;
   color: white;
   border: none;
-  border-radius: 8px;
-  font-size: 12px;
+  border-radius: 4px;
+  font-size: 10px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: 0 3px 12px rgba(37, 99, 235, 0.2);
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
 }
 
-.imaging-action-primary:hover {
+.imaging-save-btn:hover {
+  background: #1D4ED8;
   transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.3);
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.15);
+}
+
+.imaging-save-btn:active {
+  transform: translateY(0px);
 }
 
 /* ========================================
-   QUICK ACTIONS - COMPACT CHIPS
+   QUICK ACTIONS - COMPACT
    ======================================== */
 .quick-actions-compact {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 6px;
+  gap: 2px;
   flex-shrink: 0;
-  padding-top: 6px;
+  padding: 2px 0;
   border-top: 1px solid #F1F5F9;
   background: inherit;
   backdrop-filter: inherit;
 }
 
 .quick-chip {
-  padding: 6px 8px;
+  padding: 2px 4px;
   background: transparent;
   border: 1px solid #E5E7EB;
-  border-radius: 8px;
-  font-size: 11px;
+  border-radius: 4px;
+  font-size: 9px;
   font-weight: 500;
   color: #64748B;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.15s ease;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 4px;
+  gap: 2px;
+  height: 24px;
 }
 
 .quick-chip:hover:not(:disabled) {
@@ -824,11 +1234,6 @@
   color: #2563EB;
 }
 
-.quick-chip:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
 /* ========================================
    FOOTER - COMPACT
    ======================================== */
@@ -836,13 +1241,13 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  padding: 6px 0 2px 0;
-  font-size: 10px;
+  gap: 4px;
+  padding: 2px 0 1px 0;
+  font-size: 8px;
   color: #94A3B8;
   flex-shrink: 0;
   border-top: 1px solid #F1F5F9;
-  margin-top: 4px;
+  margin-top: 2px;
 }
 
 /* ========================================
@@ -1039,6 +1444,9 @@
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .soap-save-btn:hover {
@@ -1067,4 +1475,215 @@
   flex-direction: column;
   gap: 6px;
   padding-bottom: 4px;
+}
+
+/* ========================================
+   IMAGING SECTION HEADERS
+   ======================================== */
+
+.imaging-section {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.imaging-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.imaging-section-title {
+  font-size: 10px;
+  font-weight: 600;
+  color: #64748B;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.imaging-count {
+  font-weight: 400;
+  color: #94A3B8;
+}
+
+.report-section {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ========================================
+   ICON WRAPPERS WITH COLORFUL BACKGROUNDS
+   ======================================== */
+
+/* Header Icon - Blue */
+.header-icon-wrapper {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #EFF6FF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.header-icon {
+  color: #2563EB;
+}
+
+/* Tab Icons - Colorful */
+.tab-icon-wrapper {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* SOAP Tab - Blue */
+.clinical-tab:first-child .tab-icon-wrapper {
+  background: #EFF6FF;
+}
+.clinical-tab:first-child .tab-icon {
+  color: #2563EB;
+}
+
+/* Prescription Tab - Purple */
+.clinical-tab:nth-child(2) .tab-icon-wrapper {
+  background: #F3E8FF;
+}
+.clinical-tab:nth-child(2) .tab-icon {
+  color: #7C3AED;
+}
+
+/* Imaging Tab - Cyan */
+.clinical-tab:nth-child(3) .tab-icon-wrapper {
+  background: #E0F7FA;
+}
+.clinical-tab:nth-child(3) .tab-icon {
+  color: #06B6D4;
+}
+
+/* Active Tab Override */
+.clinical-tab.active .tab-icon-wrapper {
+  background: #FFFFFF;
+}
+.clinical-tab.active .tab-icon {
+  color: #2563EB;
+}
+
+/* Prescription Header Icon - Purple */
+.prescription-header-icon-wrapper {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #F3E8FF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.prescription-header-icon {
+  color: #7C3AED;
+}
+
+/* Special Instructions Icon - Gray */
+.special-instructions-label-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.special-instructions-icon {
+  color: #64748B;
+}
+
+/* Quick Action Icons - Colorful */
+.quick-chip-icon-wrapper {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* SOAP Quick Action - Blue */
+.quick-chip:first-child .quick-chip-icon-wrapper {
+  background: #EFF6FF;
+}
+.quick-chip:first-child .quick-chip-icon {
+  color: #2563EB;
+}
+
+/* Prescription Quick Action - Purple */
+.quick-chip:nth-child(2) .quick-chip-icon-wrapper {
+  background: #F3E8FF;
+}
+.quick-chip:nth-child(2) .quick-chip-icon {
+  color: #7C3AED;
+}
+
+/* Imaging Quick Action - Cyan */
+.quick-chip:nth-child(3) .quick-chip-icon-wrapper {
+  background: #E0F7FA;
+}
+.quick-chip:nth-child(3) .quick-chip-icon {
+  color: #06B6D4;
+}
+
+/* Schedule Quick Action - Green */
+.quick-chip:nth-child(4) .quick-chip-icon-wrapper {
+  background: #E8F5E9;
+}
+.quick-chip:nth-child(4) .quick-chip-icon {
+  color: #22C55E;
+}
+
+/* Active State for Quick Actions */
+.quick-chip.active .quick-chip-icon-wrapper {
+  background: #FFFFFF;
+}
+.quick-chip.active .quick-chip-icon {
+  color: #2563EB;
+}
+
+/* No Patient Icon - Gray */
+.no-patient-icon {
+  color: #94A3B8;
+}
+
+/* Upload Icon - Blue */
+.upload-icon {
+  color: #2563EB;
+}
+
+/* Save Icons - White (on blue buttons) */
+.soap-save-btn svg,
+.prescription-save-btn svg,
+.imaging-save-btn svg {
+  flex-shrink: 0;
+  color: #FFFFFF;
+}
+
+/* AI Generate Icon - White (on gradient button) */
+.imaging-ai-compact svg {
+  color: #FFFFFF;
+}
+
+/* Empty State Icons - Light Gray */
+.empty-icon {
+  color: #94A3B8;
+  opacity: 0.5;
+}
+
+/* Lock Icon - Gray */
+.lock-icon {
+  color: #94A3B8;
 }
