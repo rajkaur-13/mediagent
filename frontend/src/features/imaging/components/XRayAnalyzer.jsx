@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-const API_URL = 'https://mediagent-pn7o.onrender.com';
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 function XRayAnalyzer({ patientId, token, onAnalysisComplete }) {
   const [selectedFile, setSelectedFile] = useState(null);
   const [imageType, setImageType] = useState('chest_xray');

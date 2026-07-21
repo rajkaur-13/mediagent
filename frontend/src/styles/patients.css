@@ -861,6 +861,32 @@
 }
 
 
+/* ========================================
+   COMPACT SEARCH
+   ======================================== */
 
+.search-container {
+  padding: 6px 8px !important;
+  min-height: 36px !important;
+}
+
+.search-container input {
+  font-size: 12px !important;
+  padding: 4px 8px !important;
+  min-height: 28px !important;
+}
+
+.search-icon {
+  font-size: 12px !important;
+}
+
+.search-dropdown-arrow {
+  font-size: 10px !important;
+}
+
+.search-arrow {
+  font-size: 12px !important;
+  padding: 2px 6px !important;
+}
 
 

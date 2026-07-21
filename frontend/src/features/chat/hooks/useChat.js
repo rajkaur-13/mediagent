@@ -6,47 +6,6 @@ export const useChat = (token, setMessages) => {
   const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef(null);
 
-  const formatMessage = (text) => {
-    if (!text) return '';
-    
-    let formatted = text;
-    
-    formatted = formatted.replace(/\n/g, '<br/>');
-    formatted = formatted.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-    
-    // Patient name linking
-    const patientNameMatches = text.matchAll(/(?:Patient Selected:|✅ Patient Selected:)\s*([^\n<]+)/g);
-    const patientNames = [];
-    
-    for (const match of patientNameMatches) {
-      const name = match[1].trim();
-      if (!patientNames.includes(name) && name.length > 0) {
-        patientNames.push(name);
-      }
-    }
-    
-    const listMatches = text.matchAll(/•\s*([^\n(]+?)(?:\s*\(|$)/g);
-    for (const match of listMatches) {
-      const name = match[1].trim();
-      if (!patientNames.includes(name) && name.length > 0) {
-        patientNames.push(name);
-      }
-    }
-    
-    patientNames.forEach(name => {
-      if (name.length < 2) return;
-      
-      const escapedName = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      const regex = new RegExp(`(?<![<"'])\\b${escapedName}\\b(?![^<]*<\/)`, 'g');
-      
-      formatted = formatted.replace(regex, (match) => {
-        return `<span class="patient-name-link" onclick="window.directSelectPatient('${match.replace(/'/g, "\\'")}')">${match}</span>`;
-      });
-    });
-    
-    return formatted;
-  };
-
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
@@ -81,15 +40,15 @@ export const useChat = (token, setMessages) => {
         }
       }
       
-      const formattedMessage = formatMessage(data.reply);
+      // ✅ FIX: ALWAYS add as a new message (NOT replace)
       setMessages(prev => [...prev, { 
         id: (Date.now()+1).toString(), 
-        text: formattedMessage, 
+        text: data.reply,  // Raw text from backend
         isUser: false, 
         timestamp: new Date() 
       }]);
       
-      setLoading(false);  // ✅ Move this here
+      setLoading(false);
       return data;
     } catch (error) {
       console.error('Error:', error);
@@ -99,7 +58,7 @@ export const useChat = (token, setMessages) => {
         isUser: false, 
         timestamp: new Date() 
       }]);
-      setLoading(false);  // ✅ Also keep here for errors
+      setLoading(false);
     }
   }, []);
 
@@ -118,8 +77,7 @@ export const useChat = (token, setMessages) => {
     messagesEndRef,
     sendMessage,
     handleKeyPress,
-    scrollToBottom,
-    formatMessage
+    scrollToBottom
   };
 };
 

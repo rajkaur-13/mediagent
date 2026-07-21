@@ -19,6 +19,7 @@ class AgentState(TypedDict):
     plan: List[str]
     next_action: str
     final_response: str
+    params: Dict[str, Any]  # Added to store extracted parameters
 
 # Initialize LLM
 llm = ChatGroq(
@@ -97,7 +98,7 @@ def planner(state: AgentState) -> AgentState:
     - get_all_patients: When user wants to list all patients
     - schedule_appointment: When user wants to book an appointment (extract patient_name, weeks, time)
     - get_appointments: When user wants to see appointments
-    - generate_soap_note: When user wants to create a SOAP note
+    - generate_soap_note: When user wants to create a SOAP note (requires patient_id)
     - respond: When no action is needed
     
     User message: {user_message}
@@ -114,16 +115,30 @@ def planner(state: AgentState) -> AgentState:
     
     state["plan"] = [plan.get("action", "respond")]
     state["next_action"] = plan.get("action", "respond")
+    state["params"] = plan.get("params", {})  # Store params in state
     
     return state
 
 def executor(state: AgentState) -> AgentState:
-    """Executor node: Runs the planned action"""
+    """Executor node: Runs the planned action with dynamic parameters"""
     action = state["next_action"]
+    params = state.get("params", {})
     results = []
     
     if action == "search_patient":
-        result = search_patient_tool.invoke({"name": "Sarah Johnson"})
+        # Use dynamic name from params
+        patient_name = params.get("name") or params.get("patient_name") or state.get("current_patient_name")
+        if not patient_name and state["messages"]:
+            # Try to extract from last user message
+            user_message = state["messages"][-1]["content"]
+            # Simple extraction: look for "show me [name]" pattern
+            import re
+            match = re.search(r'(?:show me|find|search for|get)\s+([A-Za-z\s]+)', user_message, re.IGNORECASE)
+            if match:
+                patient_name = match.group(1).strip()
+        if not patient_name:
+            patient_name = "Sarah Johnson"  # Fallback only if nothing else works
+        result = search_patient_tool.invoke({"name": patient_name})
         results.append({"action": action, "result": result})
         
     elif action == "get_all_patients":
@@ -131,18 +146,36 @@ def executor(state: AgentState) -> AgentState:
         results.append({"action": action, "result": result})
         
     elif action == "schedule_appointment":
-        result = schedule_appointment_tool.invoke({"patient_name": "Michael Chen", "weeks_from_now": 0, "time": "09:00 AM"})
+        # Use dynamic params
+        patient_name = params.get("patient_name") or state.get("current_patient_name")
+        if not patient_name and state["messages"]:
+            user_message = state["messages"][-1]["content"]
+            import re
+            match = re.search(r'(?:schedule|book|appointment for)\s+([A-Za-z\s]+?)(?:\s+at|\s+on|\s+for|$)', user_message, re.IGNORECASE)
+            if match:
+                patient_name = match.group(1).strip()
+        weeks_from_now = params.get("weeks_from_now", 0)
+        time = params.get("time", "09:00 AM")
+        result = schedule_appointment_tool.invoke({
+            "patient_name": patient_name or "Unknown",
+            "weeks_from_now": weeks_from_now,
+            "time": time
+        })
         results.append({"action": action, "result": result})
         
     elif action == "get_appointments":
-        result = get_appointments_tool.invoke({})
+        patient_name = params.get("patient_name") or state.get("current_patient_name")
+        result = get_appointments_tool.invoke({"patient_name": patient_name})
         results.append({"action": action, "result": result})
         
     elif action == "generate_soap_note":
-        if state.get("current_patient_id"):
-            result = generate_soap_note_tool.invoke({"patient_id": state["current_patient_id"]})
+        patient_id = state.get("current_patient_id")
+        if not patient_id and state.get("current_patient"):
+            patient_id = state["current_patient"].get("id")
+        if patient_id:
+            result = generate_soap_note_tool.invoke({"patient_id": patient_id})
         else:
-            result = json.dumps({"error": "No patient selected"})
+            result = json.dumps({"error": "No patient selected. Please search for a patient first."})
         results.append({"action": action, "result": result})
     
     state["tool_results"] = results
@@ -155,23 +188,26 @@ def reflector(state: AgentState) -> AgentState:
 def response_generator(state: AgentState) -> AgentState:
     """Response node: Generates final response for user"""
     if state["tool_results"]:
-        result = json.loads(state["tool_results"][0]["result"])
-        
-        if "found" in result and result["found"]:
-            if "patient" in result:
-                state["current_patient"] = result["patient"]
-                state["current_patient_id"] = result["patient"]["id"]
+        try:
+            result = json.loads(state["tool_results"][0]["result"])
             
-            if "patient" in result:
-                patient = result["patient"]
-                state["final_response"] = f"✅ Found patient: {patient['name']}\n\n📋 Details:\n- MRN: {patient['mrn']}\n- Age: {patient['age']}\n- Phone: {patient.get('phone', 'N/A')}"
-            elif "patients" in result:
-                patient_list = "\n".join([f"• {p['name']}" for p in result["patients"]])
-                state["final_response"] = f"📋 Found {result['count']} patients:\n{patient_list}"
+            if "found" in result and result["found"]:
+                if "patient" in result:
+                    state["current_patient"] = result["patient"]
+                    state["current_patient_id"] = result["patient"]["id"]
+                
+                if "patient" in result:
+                    patient = result["patient"]
+                    state["final_response"] = f"✅ Found patient: {patient['name']}\n\n📋 Details:\n- MRN: {patient['mrn']}\n- Age: {patient['age']}\n- Phone: {patient.get('phone', 'N/A')}"
+                elif "patients" in result:
+                    patient_list = "\n".join([f"• {p['name']}" for p in result["patients"]])
+                    state["final_response"] = f"📋 Found {result['count']} patients:\n{patient_list}"
+                else:
+                    state["final_response"] = result.get("message", "Action completed")
             else:
-                state["final_response"] = result.get("message", "Action completed")
-        else:
-            state["final_response"] = result.get("message", "Action failed")
+                state["final_response"] = result.get("message", "Action failed")
+        except:
+            state["final_response"] = state["tool_results"][0]["result"]
     else:
         state["final_response"] = "I'm here to help with patient management."
     
@@ -213,7 +249,8 @@ class LangGraphOrchestrator:
             tool_results=[],
             plan=[],
             next_action="",
-            final_response=""
+            final_response="",
+            params={}  # Initialize params
         )
     
     def process_message(self, user_message: str, image_base64: str = None) -> Dict[str, Any]:

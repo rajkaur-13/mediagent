@@ -4,7 +4,7 @@ from ..models.patient import Patient
 from ..models.soap_note import SOAPNote
 from ..models.prescription import Prescription
 from ..models.appointment import Appointment
-from ..models.image import Image  # Assuming you have an Image model
+from ..models.image import Image  
 from datetime import datetime, timedelta
 from typing import List, Optional, Dict, Any
 from difflib import get_close_matches

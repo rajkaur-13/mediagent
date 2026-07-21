@@ -32,7 +32,8 @@ services:
       dockerfile: Dockerfile.backend
     container_name: mediagent-backend
     environment:
-      DATABASE_URL: postgresql://mediagent:mediagent123@postgres:5432/mediagent
+      # ✅ Updated to use NeonDB (Cloud PostgreSQL)
+      DATABASE_URL: postgresql://neondb_owner:npg_V0qeoQxFar6v@ep-red-sea-avcwh6mf-pooler.c-11.us-east-1.aws.neon.tech/neondb?sslmode=require
       REDIS_URL: redis://redis:6379
     ports:
       - "8000:8000"
@@ -58,17 +59,17 @@ services:
     networks:
       - mediagent-network
 
-  evaluation:
-    build:
-      context: .
-      dockerfile: Dockerfile.evaluation
-    container_name: mediagent-evaluation
-    volumes:
-      - ./evaluation:/app
-    depends_on:
-      - backend
-    networks:
-      - mediagent-network
+  #evaluation:
+  #  build:
+  #    context: .
+  #    dockerfile: Dockerfile.evaluation
+  #  container_name: mediagent-evaluation
+  #  volumes:
+  #    - ./evaluation:/app
+  #  depends_on:
+  #    - backend
+  #  networks:
+  #    - mediagent-network
 
 volumes:
   postgres_data:

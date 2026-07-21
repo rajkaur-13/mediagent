@@ -94,3 +94,125 @@ strong, b {
   font-weight: 600;
   color: var(--text-primary) !important;
 }
+
+/* ========================================
+   BASE
+   ======================================== */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background: 
+    radial-gradient(circle at 15% 20%, #B9DDF9 0%, transparent 45%),
+    radial-gradient(circle at 85% 25%, #CFF4D2 0%, transparent 40%),
+    radial-gradient(circle at 50% 85%, #CDE8FB 0%, transparent 40%),
+    linear-gradient(135deg, #EAF6FF 0%, #DDF2FF 50%, #EAFCEB 100%);
+  font-family: var(--font-body);
+  color: var(--text-primary);
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ===== PREMIUM TYPOGRAPHY HIERARCHY ===== */
+
+/* Display - Large Titles */
+h1, .h1, .title, .patient-name {
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-bold);
+  font-size: var(--font-size-2xl);
+  letter-spacing: var(--letter-spacing-tight);
+  color: var(--text-primary);
+  line-height: var(--line-height-tight);
+}
+
+/* Heading 2 - Section Titles */
+h2, .h2, .panel-header, .section-title {
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-lg);
+  letter-spacing: var(--letter-spacing-normal);
+  color: var(--text-secondary);
+  line-height: var(--line-height-normal);
+}
+
+/* Heading 3 - Sub-sections */
+h3, .h3, .card-title, .tab {
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-md);
+  letter-spacing: var(--letter-spacing-normal);
+  color: var(--text-primary);
+  line-height: var(--line-height-normal);
+}
+
+/* Body Text */
+p, .body, .message-text, .patient-detail, .appointment-item {
+  font-family: var(--font-body);
+  font-weight: var(--font-weight-regular);
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-relaxed);
+  color: var(--text-primary);
+  letter-spacing: var(--letter-spacing-wide);
+}
+
+/* Small Text */
+small, .caption, .message-time, .badge, .appointment-date {
+  font-family: var(--font-body);
+  font-weight: var(--font-weight-regular);
+  font-size: var(--font-size-caption);
+  color: var(--text-muted);
+  letter-spacing: var(--letter-spacing-wider);
+  line-height: var(--line-height-normal);
+}
+
+/* Labels */
+label, .label, .soap-field label {
+  font-family: var(--font-body);
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-caption);
+  text-transform: uppercase;
+  letter-spacing: var(--letter-spacing-wider);
+  color: var(--text-secondary);
+  line-height: var(--line-height-normal);
+}
+
+/* Buttons */
+button, .btn, .send-btn, .add-patient-btn, .save-btn, .quick-btn, .tab {
+  font-family: var(--font-body);
+  font-weight: var(--font-weight-medium);
+  font-size: var(--font-size-small);
+  letter-spacing: var(--letter-spacing-normal);
+  line-height: var(--line-height-normal);
+}
+
+/* Inputs */
+input, textarea, select {
+  font-family: var(--font-body);
+  font-weight: var(--font-weight-regular);
+  font-size: var(--font-size-base);
+  letter-spacing: var(--letter-spacing-normal);
+  line-height: var(--line-height-normal);
+}
+
+/* Bold */
+strong, b {
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary) !important;
+}
+
+/* Code/Monospace for medical data */
+code, .medical-code, .lab-value {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-small);
+  font-weight: var(--font-weight-regular);
+  background: rgba(0, 0, 0, 0.04);
+  padding: 2px 6px;
+  border-radius: 4px;
+  color: var(--text-primary);
+}

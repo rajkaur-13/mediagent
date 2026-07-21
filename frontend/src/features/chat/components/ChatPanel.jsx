@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-
+import { formatMedicalMessage } from '../../../utils/messageFormatter.js';
 const ChatPanel = ({
   messages,
   loading,
@@ -16,8 +16,9 @@ const ChatPanel = ({
   const [isUserScrolled, setIsUserScrolled] = useState(false);
   const textareaRef = useRef(null);
 
-  const renderMessage = (text) => {
-    return { __html: text };
+  // ✅ UPDATED: Now uses the formatter
+  const renderMessage = (text, isUser = false) => {
+    return { __html: formatMedicalMessage(text, isUser) };
   };
 
   // Auto-resize textarea
@@ -142,7 +143,8 @@ const ChatPanel = ({
           <div key={msg.id} className={`message ${msg.isUser ? 'user' : 'ai'}`}>
             <div className="message-avatar">{msg.isUser ? '👨‍⚕️' : '🤖'}</div>
             <div className="message-bubble">
-              <div className="message-text" dangerouslySetInnerHTML={renderMessage(msg.text)} />
+              {/* ✅ UPDATED: Pass isUser to renderMessage */}
+              <div className="message-text" dangerouslySetInnerHTML={renderMessage(msg.text, msg.isUser)} />
               <div className="message-time">{msg.timestamp?.toLocaleTimeString() || new Date().toLocaleTimeString()}</div>
             </div>
           </div>

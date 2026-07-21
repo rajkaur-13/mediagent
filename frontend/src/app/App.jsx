@@ -18,6 +18,9 @@ import Login from "../features/auth/components/Login";
 import XRayAnalyzer from '../features/imaging/components/XRayAnalyzer';
 import ClinicalPanel from "../features/clinical/components/ClinicalPanel";
 
+// ✅ Add this import
+import { api } from '../services/api';
+
 function App() {
   // ===== AUTH =====
   const { token, isAuthenticated, handleLogin, handleLogout, recentAppointments, setRecentAppointments } = useAuth();
@@ -83,14 +86,22 @@ How can I help you today?`;
   const [mobileTab, setMobileTab] = useState('chat');
   const hasPatientSelected = currentPatient !== null;
 
-  // ===== Expose for clickable patient names =====
+  // ===== Expose for clickable patient names and example pills =====
   useEffect(() => {
     window.directSelectPatient = handleDirectPatientSelect;
-  }, [handleDirectPatientSelect]);
+    window.directSetInput = (text) => {
+      setInput(text);
+      // Focus the input after a small delay
+      setTimeout(() => {
+        const inputElement = document.querySelector('.chat-input-premium');
+        if (inputElement) inputElement.focus();
+      }, 50);
+    };
+  }, [handleDirectPatientSelect, setInput]);
 
   // ===== AUTO-LOAD PATIENT INTO CHAT WHEN SELECTED =====
   useEffect(() => {
-    if (currentPatient) {
+    if (currentPatient && token) {
       // Check if patient info already exists in chat
       const patientInfoExists = messages.some(msg => 
         msg.text && msg.text.includes(`Patient Selected: ${currentPatient.name}`)
@@ -98,23 +109,41 @@ How can I help you today?`;
 
       // Only add if not already showing and not the welcome message
       if (!patientInfoExists && messages.length > 0) {
-        const patientMessage = `👤 <strong>Patient Selected: ${currentPatient.name}</strong><br/>
-MRN: ${currentPatient.mrn} • Age: ${currentPatient.age} yrs • Gender: ${currentPatient.gender}<br/><br/>
-📋 <strong>Medical History:</strong><br/>
-• Allergies: ${currentPatient.allergies?.length > 0 ? currentPatient.allergies.join(', ') : 'None'}<br/>
-• Conditions: ${currentPatient.conditions?.length > 0 ? currentPatient.conditions.join(', ') : 'None'}<br/>
-• Phone: ${currentPatient.phone || 'N/A'}<br/><br/>
-How can I help you with ${currentPatient.name} today?`;
+        // ✅ Send a message to backend to get full patient data
+        const fetchFullPatient = async () => {
+          try {
+            // Send a message to get the full patient data
+            const fullDataMessage = `Show me ${currentPatient.name}`;
+            const data = await api.sendChatMessage(token, fullDataMessage);
+            
+            // The backend will return the full patient data with all sections
+            // The formatter will then display the premium Clinical Snapshot Card
+            setMessages(prev => [...prev, {
+              id: Date.now().toString(),
+              text: data.reply,
+              isUser: false,
+              timestamp: new Date()
+            }]);
+          } catch (error) {
+            console.error('Error fetching patient data:', error);
+            // Fallback: show basic info
+            const fallbackMessage = `✅ Patient Selected: ${currentPatient.name}
+📋 Demographics: MRN: ${currentPatient.mrn} | Age: ${currentPatient.age} | Gender: ${currentPatient.gender}
 
-        setMessages(prev => [...prev, {
-          id: Date.now().toString(),
-          text: patientMessage,
-          isUser: false,
-          timestamp: new Date()
-        }]);
+How can I help you with ${currentPatient.name} today?`;
+            setMessages(prev => [...prev, {
+              id: Date.now().toString(),
+              text: fallbackMessage,
+              isUser: false,
+              timestamp: new Date()
+            }]);
+          }
+        };
+        
+        fetchFullPatient();
       }
     }
-  }, [currentPatient]);
+  }, [currentPatient, token]);
 
   // ===== IF NOT LOGGED IN, SHOW LOGIN =====
   if (!isAuthenticated) {

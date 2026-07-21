@@ -83,17 +83,10 @@ export const usePatients = (token, setMessages) => {
           setAllPatientNames(prev => [...prev, data.patient.name]);
         }
         
-        const formatMessage = (text) => {
-          if (!text) return '';
-          let formatted = text.replace(/\n/g, '<br/>');
-          formatted = formatted.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-          return formatted;
-        };
-        
-        const formattedMessage = formatMessage(data.reply);
+        // ✅ FIX: Send raw text, let ChatPanel format it
         setMessages(prev => [...prev, { 
           id: Date.now().toString(), 
-          text: formattedMessage, 
+          text: data.reply,  // Raw text from backend
           isUser: false, 
           timestamp: new Date() 
         }]);
@@ -195,7 +188,6 @@ export const usePatients = (token, setMessages) => {
 
   return {
     patients,
-
     currentPatient,
     setCurrentPatient,
     patientCache,
