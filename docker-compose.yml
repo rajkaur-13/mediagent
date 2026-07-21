@@ -33,7 +33,7 @@ services:
     container_name: mediagent-backend
     environment:
       # ✅ Updated to use NeonDB (Cloud PostgreSQL)
-      DATABASE_URL: postgresql://neondb_owner:npg_V0qeoQxFar6v@ep-red-sea-avcwh6mf-pooler.c-11.us-east-1.aws.neon.tech/neondb?sslmode=require
+      DATABASE_URL: ${DATABASE_URL}
       REDIS_URL: redis://redis:6379
     ports:
       - "8000:8000"
